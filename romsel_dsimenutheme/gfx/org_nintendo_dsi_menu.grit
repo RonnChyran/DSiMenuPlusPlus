@@ -10,6 +10,9 @@
 #The Transperant colour of 0xFF00FF
 -gT FF00FF
 
+# Reduce palette to 4 colors
+-pn4
+
 ##################
 # Old Parameters
 #-W3
