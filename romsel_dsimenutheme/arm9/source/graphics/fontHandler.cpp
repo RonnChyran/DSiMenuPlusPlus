@@ -54,11 +54,8 @@ void fontInit()
 	// Set  Bank A to texture (128 kb)
 	
 	vramSetBankA(VRAM_A_TEXTURE);
-	// Put font textures into VRAM D and VRAM G
-	//vramSetBankD(VRAM_D_TEXTURE);
-	//vramSetBankG(VRAM_G_TEX_PALETTE);
-
-	// vramSetBankF(VRAM_F_TEX_PALETTE);
+	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
+	
 	smallFont.load(smallFontImages, // pointer to glImage array
 				SMALL_FONT_NUM_IMAGES, // Texture packer auto-generated #define
 				small_font_texcoords, // Texture packer auto-generated array

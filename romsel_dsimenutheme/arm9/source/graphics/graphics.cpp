@@ -1267,7 +1267,7 @@ void graphicsInit()
 	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
 	vramSetBankE(VRAM_E_TEX_PALETTE);
 	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
-	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // Need more palette memory for fonts. // Allocate VRAM bank for all the palettes
+// Need more palette memory for fonts. // Allocate VRAM bank for all the palettes
 //	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything... 
 	lcdMainOnBottom();
 	
