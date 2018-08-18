@@ -1176,9 +1176,21 @@ void clearBoxArt() {
 
 void bottomBgLoad() {
 	int bg = bgInit(2, BgType_ExRotation, BgSize_ER_256x256, 0,1);
-	dmaCopy(bottomTiles, bgGetGfxPtr(bg), bottomTilesLen);
-	dmaCopy(bottomPal, BG_PALETTE, bottomPalLen);
-	dmaCopy(bottomMap, bgGetMapPtr(bg), bottomMapLen);
+	if (theme == 1) {
+		dmaCopy(_3ds_bottomTiles, bgGetGfxPtr(bg), _3ds_bottomTilesLen);
+		dmaCopy(_3ds_bottomPal, BG_PALETTE, _3ds_bottomPalLen);
+		dmaCopy(_3ds_bottomMap, bgGetMapPtr(bg), _3ds_bottomMapLen);
+	}
+	else if (subtheme == 1) {
+		dmaCopy(org_bottomTiles, bgGetGfxPtr(bg), org_bottomTilesLen);
+		dmaCopy(org_bottomPal, BG_PALETTE, org_bottomPalLen);
+		dmaCopy(org_bottomMap, bgGetMapPtr(bg), org_bottomMapLen);
+	} else {
+		dmaCopy(bottomTiles, bgGetGfxPtr(bg), bottomTilesLen);
+		dmaCopy(bottomPal, BG_PALETTE, bottomPalLen);
+		dmaCopy(bottomMap, bgGetMapPtr(bg), bottomMapLen);
+	}
+	
 }
 void graphicsInit()
 {

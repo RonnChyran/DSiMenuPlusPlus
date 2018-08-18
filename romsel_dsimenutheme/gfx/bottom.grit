@@ -7,6 +7,7 @@
 # Set the bit depth to 4 (16 colors)
 -gB8
 
+# tiled mode
 -gt
 
 #Include map

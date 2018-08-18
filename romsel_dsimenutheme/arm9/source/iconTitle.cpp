@@ -743,6 +743,8 @@ void iconUpdate(bool isDir, const char* name, int num)
 		} else {
 			loadIcon(ndsBanner.icon, ndsBanner.palette, num, false);
 		}
+		// force fonts back into vram.
+		reloadFonts();
 	}
 }
 
