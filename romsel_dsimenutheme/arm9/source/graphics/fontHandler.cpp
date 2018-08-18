@@ -43,6 +43,8 @@ using namespace std;
 FontGraphic smallFont;
 FontGraphic largeFont;
 
+int smallFontTexId, largeFontTexId;
+
 glImage smallFontImages[SMALL_FONT_NUM_IMAGES];
 glImage largeFontImages[LARGE_FONT_NUM_IMAGES];
 
@@ -51,12 +53,9 @@ list<TextPane> panes;
 
 void fontInit()
 {
-	// Set  Bank A to texture (128 kb)
 	
-	vramSetBankA(VRAM_A_TEXTURE);
-	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
 	
-	smallFont.load(smallFontImages, // pointer to glImage array
+	smallFontTexId = smallFont.load(smallFontImages, // pointer to glImage array
 				SMALL_FONT_NUM_IMAGES, // Texture packer auto-generated #define
 				small_font_texcoords, // Texture packer auto-generated array
 				GL_RGB16, // texture type for glTexImage2D() in videoGL.h
@@ -70,7 +69,7 @@ void fontInit()
 				);
 
 	//Do the same with our bigger texture
-	largeFont.load(largeFontImages,
+	largeFontTexId = largeFont.load(largeFontImages,
 				LARGE_FONT_NUM_IMAGES,
 				large_font_texcoords,
 				GL_RGB16,
@@ -84,6 +83,13 @@ void fontInit()
 				);
 }
 
+void reloadFonts() {
+	glDeleteTextures(1, &smallFontTexId);
+	glDeleteTextures(1, &largeFontTexId);
+	swiWaitForVBlank();
+	fontInit();
+	swiWaitForVBlank();
+}
 TextPane &createTextPane(int startX, int startY, int shownElements)
 {
 	if (panes.size() > 2)
