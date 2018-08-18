@@ -703,15 +703,6 @@ void vBlankHandler()
 			}
 			if (applaunchprep && theme==0) {
 				
-				// Cover selected app
-				for (int y = 0; y < 4; y++)
-				{
-					for (int x = 0; x < 4; x++)
-					{
-						glSprite(96+x*16, 86+y*16, GL_FLIP_NONE, &subBgImage[2 & 255]);
-					}
-				}
-				
 
 				if(startMenu) {
 					if (startMenu_cursorPosition == 0) {

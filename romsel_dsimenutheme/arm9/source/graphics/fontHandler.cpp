@@ -84,11 +84,10 @@ void fontInit()
 }
 
 void reloadFonts() {
-	glDeleteTextures(1, &smallFontTexId);
-	glDeleteTextures(1, &largeFontTexId);
-	swiWaitForVBlank();
-	fontInit();
-	swiWaitForVBlank();
+	glBindTexture(0, largeFontTexId);
+	glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) large_fontPal);
+	glBindTexture(0, smallFontTexId);
+	glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) small_fontPal);
 }
 TextPane &createTextPane(int startX, int startY, int shownElements)
 {
