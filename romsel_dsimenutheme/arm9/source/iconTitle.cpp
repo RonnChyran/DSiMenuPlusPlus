@@ -70,7 +70,7 @@ static u16 cachedTitle[40][TITLE_CACHE_SIZE];
 static char titleToDisplay[3][384]; 
 
 static int iconTexID[6][8];
-static glImage ndsIcon[6][8][(32 / 32) * (256 / 32)];
+static glImage ndsIcon[6][8];
 
 static glImage gbaIcon[1];
 static glImage gbIcon[(32 / 32) * (64 / 32)];
@@ -140,7 +140,7 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 		glDeleteTextures(1, &iconTexID[num][i]);
 	}
 	iconTexID[num][0] =
-		glLoadTileSet(ndsIcon[num][0], // pointer to glImage array
+		glLoadTileSet(ndsIcon[num], // pointer to glImage array
 					32, // sprite width
 					32, // sprite height
 					32, // bitmap image width
@@ -161,7 +161,7 @@ void loadUnkIcon(int num)
 		glDeleteTextures(1, &iconTexID[num][i]);
 	}
 	iconTexID[num][0] =
-	glLoadTileSet(ndsIcon[num][0], // pointer to glImage array
+	glLoadTileSet(ndsIcon[num], // pointer to glImage array
 				32, // sprite width
 				32, // sprite height
 				32, // bitmap image width
@@ -271,7 +271,7 @@ void drawIcon(int Xpos, int Ypos, int num)
 		num2 -= 6;
 	}
 	//glSprite(Xpos, Ypos, bannerFlip[num], &ndsIcon[num2][bnriconPalLine[num]][bnriconframenumY[num] & 31]);
-	glSprite(Xpos, Ypos, bannerFlip[num], &ndsIcon[num2][0][bnriconframenumY[num] & 31]);
+	glSprite(Xpos, Ypos, bannerFlip[num], &ndsIcon[num2][bnriconframenumY[num] & 31]);
 }
 
 void drawIconGBA(int Xpos, int Ypos)
