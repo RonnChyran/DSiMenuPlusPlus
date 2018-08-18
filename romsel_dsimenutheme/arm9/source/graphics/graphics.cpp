@@ -1174,6 +1174,12 @@ void clearBoxArt() {
 	}
 }
 
+void bottomBgLoad() {
+	int bg = bgInit(2, BgType_ExRotation, BgSize_ER_256x256, 0,1);
+	dmaCopy(bottomTiles, bgGetGfxPtr(bg), bottomTilesLen);
+	dmaCopy(bottomPal, BG_PALETTE, bottomPalLen);
+	dmaCopy(bottomMap, bgGetMapPtr(bg), bottomMapLen);
+}
 void graphicsInit()
 {
 	for (int i = 0; i < 12; i++) {
@@ -1259,7 +1265,7 @@ void graphicsInit()
 
 	// Initialize gl2d
 	glScreen2D();
-	//glInit();
+	// Make gl2d render on transparent stage.
 	glClearColor(0,0,0,0);
 	// Set up enough texture memory for our textures
 	// Bank A is just 128kb and we are using 194 kb of
@@ -1289,14 +1295,8 @@ void graphicsInit()
 
 	if (theme < 1) loadPhoto();
 	topBgLoad();
-	
-	/** bottom load start **/
-	int bg = bgInit(2, BgType_ExRotation, BgSize_ER_256x256, 0,1);
-	dmaCopy(bottomTiles, bgGetGfxPtr(bg), bottomTilesLen);
-	dmaCopy(bottomPal, BG_PALETTE, bottomPalLen);
-	dmaCopy(bottomMap, bgGetMapPtr(bg), bottomMapLen);
-	
-	/** bottom load end **/
+	// todo: make theme dependent
+	bottomBgLoad();
 
 	progressTexID = glLoadTileSet(progressImage, // pointer to glImage array
 							16, // sprite width
