@@ -57,7 +57,6 @@ extern bool useGbarunner;
 extern bool flashcardUsed;
 extern bool animateDsiIcons;
 
-static int iconTexID[6][8];
 static int gbaTexID;
 static int gbTexID;
 static int nesTexID;
@@ -70,6 +69,7 @@ static bool infoFound[40] = {false};
 static u16 cachedTitle[40][TITLE_CACHE_SIZE]; 
 static char titleToDisplay[3][384]; 
 
+static int iconTexID[6][8];
 static glImage ndsIcon[6][8][(32 / 32) * (256 / 32)];
 
 static glImage gbaIcon[1];
@@ -89,6 +89,7 @@ void iconTitleInit()
 
 static inline void writeBannerText(int textlines, const char* text1, const char* text2, const char* text3)
 {
+	reloadFonts();
 	switch(textlines) {
 		case 0:
 		default:
@@ -123,7 +124,6 @@ static void convertIconTilesToRaw(u8 *tilesSrc, u8 *tilesNew, bool twl)
 	}
 }
 
-int loadIcon_loopTimes = 1;
 
 void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 * 32) / 2], u16(*palSrc)[16])
 {
@@ -131,19 +131,16 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 
 	int Ysize = 32;
 	int textureSizeY = TEXTURE_SIZE_32;
-	loadIcon_loopTimes = 1;
 	if(twl) {
 		Ysize = 256;
 		textureSizeY = TEXTURE_SIZE_256;
-		//loadIcon_loopTimes = 8;
 	}
 
 	for (int i = 0; i < 8; i++) {
 		glDeleteTextures(1, &iconTexID[num][i]);
 	}
-	for (int i = 0; i < loadIcon_loopTimes; i++) {
-		iconTexID[num][i] =
-		glLoadTileSet(ndsIcon[num][i], // pointer to glImage array
+	iconTexID[num][0] =
+		glLoadTileSet(ndsIcon[num][0], // pointer to glImage array
 					32, // sprite width
 					32, // sprite height
 					32, // bitmap image width
@@ -153,10 +150,9 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 					textureSizeY, // sizeY for glTexImage2D() in videoGL.h
 					GL_TEXTURE_WRAP_S | GL_TEXTURE_WRAP_T | TEXGEN_OFF | GL_TEXTURE_COLOR0_TRANSPARENT,
 					16, // Length of the palette to use (16 colors)
-					(u16*) palSrc+(i*16), // Image palette
+					(u16*) palSrc, // Image palette
 					(u8*) tilesModified // Raw image data
 					);
-	}
 }
 
 void loadUnkIcon(int num)
@@ -743,8 +739,6 @@ void iconUpdate(bool isDir, const char* name, int num)
 		} else {
 			loadIcon(ndsBanner.icon, ndsBanner.palette, num, false);
 		}
-		// force fonts back into vram.
-		reloadFonts();
 	}
 }
 
