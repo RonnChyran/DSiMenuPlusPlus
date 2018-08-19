@@ -28,5 +28,5 @@ void iconManagerInit();
  * Otherwise, they will be replacing the existing palette
  * using glColorTableSubEXT at the same memory location.
  */
-void glLoadIcon(int num, const u16 *palette, const u8 *tiles);
+void glLoadIcon(int num, const u16 *palette, const u8 *tiles, bool twl);
 

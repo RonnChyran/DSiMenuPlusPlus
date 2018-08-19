@@ -86,6 +86,7 @@ void iconTitleInit()
 
 static inline void writeBannerText(int textlines, const char* text1, const char* text2, const char* text3)
 {
+	reloadFontPalettes();
 	switch(textlines) {
 		case 0:
 		default:
@@ -131,12 +132,12 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 		textureSizeY = TEXTURE_SIZE_256;
 	}
 
-	glLoadIcon(num, (u16*) palSrc, (u8*)tilesModified);
+	glLoadIcon(num, (u16*) palSrc, (u8*)tilesModified, twl);
 }
 
 void loadUnkIcon(int num)
 {
-	glLoadIcon(num, (u16*) icon_unkPal, (u8*) icon_unkBitmap);
+	glLoadIcon(num, (u16*) icon_unkPal, (u8*) icon_unkBitmap, false);
 }
 
 void loadGBCIcon()

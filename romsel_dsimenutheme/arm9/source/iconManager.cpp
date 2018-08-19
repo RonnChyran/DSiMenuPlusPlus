@@ -96,28 +96,28 @@ void glLoadTileSetIntoSlot(
  * Otherwise, they will be replacing the existing palette
  * using glColorTableSubEXT at the same memory location.
  */
-void glLoadIcon(int num, const u16 *_palette, const u8 *_tiles, bool init)
+void glLoadIcon(int num, const u16 *_palette, const u8 *_tiles, bool twl, bool init)
 {
     glLoadTileSetIntoSlot(
         num,
         32,               // sprite width
         32,               // sprite height
         32,               // bitmap image width
-        256,              // bitmap image height
+        twl ? 256 : 32,              // bitmap image height
         GL_RGB16,         // texture type for glTexImage2D() in videoGL.h
         TEXTURE_SIZE_32,  // sizeX for glTexImage2D() in videoGL.h
-        TEXTURE_SIZE_256, // sizeY for glTexImage2D() in videoGL.h
+        twl ? TEXTURE_SIZE_256 : TEXTURE_SIZE_32, // sizeY for glTexImage2D() in videoGL.h
         GL_TEXTURE_WRAP_S | GL_TEXTURE_WRAP_T | TEXGEN_OFF | GL_TEXTURE_COLOR0_TRANSPARENT,
         16,              // Length of the palette to use (16 colors)
         (u16 *)_palette, // Image palette
         (u8 *)_tiles,    // Raw image data
-        init     
+        init
     );
 }
 
-void glLoadIcon(int num, const u16 *palette, const u8 *tiles)
+void glLoadIcon(int num, const u16 *palette, const u8 *tiles, bool twl)
 {
-    glLoadIcon(num, palette, tiles, false);
+    glLoadIcon(num, palette, tiles, twl, false);
 }
 
 /**
@@ -133,7 +133,7 @@ void iconManagerInit()
     for (int i = 0; i < 6; i++)
     {
         printf("%i\n", _iconTexID[i]);
-        glLoadIcon(i, (u16 *)icon_unkPal, (u8 *)icon_unkBitmap, true);
+        glLoadIcon(i, (u16 *)icon_unkPal, (u8 *)icon_unkBitmap, true, true);
     }
 
     // set initialized.
