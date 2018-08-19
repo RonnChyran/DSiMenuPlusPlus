@@ -29,7 +29,7 @@
 #include "graphics/fontHandler.h"
 #include "ndsheaderbanner.h"
 #include "language.h"
-
+#include "iconManager.h"
 
 #define LEFT_ALIGN 70
 #define ICON_POS_X	112
@@ -68,9 +68,6 @@ sNDSBannerExt ndsBanner;
 static bool infoFound[40] = {false};
 static u16 cachedTitle[40][TITLE_CACHE_SIZE]; 
 static char titleToDisplay[3][384]; 
-
-static int iconTexID[6];
-static glImage ndsIcon[6][8];
 
 static glImage gbaIcon[1];
 static glImage gbIcon[(32 / 32) * (64 / 32)];
@@ -124,7 +121,6 @@ static void convertIconTilesToRaw(u8 *tilesSrc, u8 *tilesNew, bool twl)
 	}
 }
 
-
 void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 * 32) / 2], u16(*palSrc)[16])
 {
 	convertIconTilesToRaw(tilesSrc, tilesModified, twl);
@@ -135,41 +131,14 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 		Ysize = 256;
 		textureSizeY = TEXTURE_SIZE_256;
 	}
-	glDeleteTextures(1, &iconTexID[num]);
-	iconTexID[num] =
-		glLoadTileSet(ndsIcon[num], // pointer to glImage array
-					32, // sprite width
-					32, // sprite height
-					32, // bitmap image width
-					Ysize, // bitmap image height
-					GL_RGB16, // texture type for glTexImage2D() in videoGL.h
-					TEXTURE_SIZE_32, // sizeX for glTexImage2D() in videoGL.h
-					textureSizeY, // sizeY for glTexImage2D() in videoGL.h
-					GL_TEXTURE_WRAP_S | GL_TEXTURE_WRAP_T | TEXGEN_OFF | GL_TEXTURE_COLOR0_TRANSPARENT,
-					16, // Length of the palette to use (16 colors)
-					(u16*) palSrc, // Image palette
-					(u8*) tilesModified // Raw image data
-					);
+
+	glLoadIcon(num, (u16*) palSrc, (u8*)tilesModified);
 	reloadFonts();
 }
 
 void loadUnkIcon(int num)
 {
-	glDeleteTextures(1, &iconTexID[num]);
-	iconTexID[num] =
-	glLoadTileSet(ndsIcon[num], // pointer to glImage array
-				32, // sprite width
-				32, // sprite height
-				32, // bitmap image width
-				32, // bitmap image height
-				GL_RGB16, // texture type for glTexImage2D() in videoGL.h
-				TEXTURE_SIZE_32, // sizeX for glTexImage2D() in videoGL.h
-				TEXTURE_SIZE_32, // sizeY for glTexImage2D() in videoGL.h
-				GL_TEXTURE_WRAP_S | GL_TEXTURE_WRAP_T | TEXGEN_OFF | GL_TEXTURE_COLOR0_TRANSPARENT,
-				16, // Length of the palette to use (16 colors)
-				(u16*) icon_unkPal, // Image palette
-				(u8*) icon_unkBitmap // Raw image data
-				);
+	glLoadIcon(num, (u16*) icon_unkPal, (u8*) icon_unkBitmap);
 }
 
 void loadGBCIcon()
@@ -250,6 +219,7 @@ static void clearIcon(int num)
 	loadIcon(clearTiles, blackPalette, num, true);
 }
 
+
 void drawIcon(int Xpos, int Ypos, int num)
 {
 	int num2 = num;
@@ -267,7 +237,7 @@ void drawIcon(int Xpos, int Ypos, int num)
 		num2 -= 6;
 	}
 	//glSprite(Xpos, Ypos, bannerFlip[num], &ndsIcon[num2][bnriconPalLine[num]][bnriconframenumY[num] & 31]);
-	glSprite(Xpos, Ypos, bannerFlip[num], &ndsIcon[num2][bnriconframenumY[num] & 31]);
+	glSprite(Xpos, Ypos, GL_FLIP_NONE, &getIcon(num2)[bnriconframenumY[num] & 31]);
 }
 
 void drawIconGBA(int Xpos, int Ypos)

@@ -41,6 +41,7 @@
 #include "fileBrowse.h"
 #include "perGameSettings.h"
 
+#include "iconManager.h"
 #include "iconTitle.h"
 #include "graphics/fontHandler.h"
 
@@ -758,7 +759,8 @@ int main(int argc, char **argv) {
 	fontInit();
 
 	iconTitleInit();
-
+	reloadFonts();
+	iconManagerInit();
 	keysSetRepeat(25,5);
 
 	vector<string> extensionList;
