@@ -153,6 +153,7 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 					(u16*) palSrc, // Image palette
 					(u8*) tilesModified // Raw image data
 					);
+	reloadFonts();
 }
 
 void loadUnkIcon(int num)
