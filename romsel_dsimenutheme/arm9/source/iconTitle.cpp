@@ -69,7 +69,7 @@ static bool infoFound[40] = {false};
 static u16 cachedTitle[40][TITLE_CACHE_SIZE]; 
 static char titleToDisplay[3][384]; 
 
-static int iconTexID[6][8];
+static int iconTexID[6];
 static glImage ndsIcon[6][8];
 
 static glImage gbaIcon[1];
@@ -135,11 +135,8 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 		Ysize = 256;
 		textureSizeY = TEXTURE_SIZE_256;
 	}
-
-	for (int i = 0; i < 8; i++) {
-		glDeleteTextures(1, &iconTexID[num][i]);
-	}
-	iconTexID[num][0] =
+	glDeleteTextures(1, &iconTexID[num]);
+	iconTexID[num] =
 		glLoadTileSet(ndsIcon[num], // pointer to glImage array
 					32, // sprite width
 					32, // sprite height
@@ -158,10 +155,8 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 
 void loadUnkIcon(int num)
 {
-	for (int i = 0; i < 8; i++) {
-		glDeleteTextures(1, &iconTexID[num][i]);
-	}
-	iconTexID[num][0] =
+	glDeleteTextures(1, &iconTexID[num]);
+	iconTexID[num] =
 	glLoadTileSet(ndsIcon[num], // pointer to glImage array
 				32, // sprite width
 				32, // sprite height
