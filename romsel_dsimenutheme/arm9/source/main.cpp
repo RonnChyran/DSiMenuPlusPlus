@@ -759,7 +759,7 @@ int main(int argc, char **argv) {
 	fontInit();
 
 	iconTitleInit();
-	reloadFonts();
+	reloadFontPalettes();
 	iconManagerInit();
 	keysSetRepeat(25,5);
 

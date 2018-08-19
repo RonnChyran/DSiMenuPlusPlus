@@ -533,7 +533,7 @@ string browseForFile(const vector<string> extensionList, const char* username)
 			for (int i = 0; i < 15; i++) swiWaitForVBlank();
 			nowLoadingDisplaying = false;
 			clearText(false);
-			reloadFonts();
+			reloadFontPalettes();
 			for (int i = 0; i < 15; i++) swiWaitForVBlank();
 
 		}

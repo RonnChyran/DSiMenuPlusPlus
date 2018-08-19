@@ -83,7 +83,7 @@ void fontInit()
 				);
 }
 
-void reloadFonts() {
+void reloadFontPalettes() {
 	glBindTexture(0, largeFontTexId);
 	glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) large_fontPal);
 	glBindTexture(0, smallFontTexId);

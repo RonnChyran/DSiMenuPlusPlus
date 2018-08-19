@@ -86,7 +86,6 @@ void iconTitleInit()
 
 static inline void writeBannerText(int textlines, const char* text1, const char* text2, const char* text3)
 {
-	reloadFonts();
 	switch(textlines) {
 		case 0:
 		default:
@@ -133,7 +132,6 @@ void loadIcon(u8 *tilesSrc, u16 *palSrc, int num, bool twl)//(u8(*tilesSrc)[(32 
 	}
 
 	glLoadIcon(num, (u16*) palSrc, (u8*)tilesModified);
-	reloadFonts();
 }
 
 void loadUnkIcon(int num)
