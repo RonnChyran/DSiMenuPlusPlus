@@ -34,7 +34,7 @@
 #include "uvcoord_small_font.h"
 #include "uvcoord_large_font.h"
 #include "TextPane.h"
-
+#include <nds/arm9/console.h>
 extern int theme;
 extern int subtheme;
 
@@ -52,9 +52,7 @@ list<TextEntry> topText, bottomText;
 list<TextPane> panes;
 
 void fontInit()
-{
-	
-	
+{	
 	smallFontTexId = smallFont.load(smallFontImages, // pointer to glImage array
 				SMALL_FONT_NUM_IMAGES, // Texture packer auto-generated #define
 				small_font_texcoords, // Texture packer auto-generated array
@@ -84,10 +82,18 @@ void fontInit()
 }
 
 void reloadFontPalettes() {
+	u16 cmpFontPal[4];
 	glBindTexture(0, largeFontTexId);
-	glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) large_fontPal);
+	glGetColorTableEXT(0,0,0,cmpFontPal);
+	if (memcmp(cmpFontPal, large_fontPal, sizeof(cmpFontPal)) != 0) {
+		glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) large_fontPal);
+	}
+
 	glBindTexture(0, smallFontTexId);
-	glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) small_fontPal);
+	glGetColorTableEXT(0,0,0,cmpFontPal);
+	if (memcmp(cmpFontPal, large_fontPal, sizeof(cmpFontPal)) != 0) {
+		glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) small_fontPal);
+	}
 }
 TextPane &createTextPane(int startX, int startY, int shownElements)
 {
