@@ -1276,6 +1276,7 @@ void graphicsInit()
 	glScreen2D();
 	// Make gl2d render on transparent stage.
 	glClearColor(0,0,0,0);
+	glDisable(GL_CLEAR_BMP);
 	// Set up enough texture memory for our textures
 	// Bank A is just 128kb and we are using 194 kb of
 	// sprites
