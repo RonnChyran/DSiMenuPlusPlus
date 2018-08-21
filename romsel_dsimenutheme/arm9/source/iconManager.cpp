@@ -13,7 +13,17 @@
 bool initialized;
 
 int _iconTexID[6];
+
+int _gbaTexID;
+int _gbTexID;
+int _nesTexID;
+
 glImage _ndsIcon[6][8];
+
+glImage _gbaIcon[1];
+glImage _gbcIcon[(32 / 32) * (64 / 32)];
+glImage _nesIcon[1];
+
 
 /**
  * Gets the current icon stored at the specified index.

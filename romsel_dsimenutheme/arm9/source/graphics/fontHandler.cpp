@@ -95,6 +95,7 @@ void reloadFontPalettes() {
 		glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) small_fontPal);
 	}
 }
+
 TextPane &createTextPane(int startX, int startY, int shownElements)
 {
 	if (panes.size() > 2)
