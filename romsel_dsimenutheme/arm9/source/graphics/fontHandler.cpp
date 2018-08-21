@@ -52,8 +52,16 @@ list<TextEntry> topText, bottomText;
 list<TextPane> panes;
 
 void fontInit()
-{	
-	smallFontTexId = smallFont.load(smallFontImages, // pointer to glImage array
+{
+	// Set  Bank A to texture (128 kb)
+	
+	vramSetBankA(VRAM_A_TEXTURE);
+	// Put font textures into VRAM D and VRAM G
+	vramSetBankD(VRAM_D_TEXTURE);
+	//vramSetBankG(VRAM_G_TEX_PALETTE);
+
+	// vramSetBankF(VRAM_F_TEX_PALETTE);
+	smallFont.load(0, smallFontImages, // pointer to glImage array
 				SMALL_FONT_NUM_IMAGES, // Texture packer auto-generated #define
 				small_font_texcoords, // Texture packer auto-generated array
 				GL_RGB16, // texture type for glTexImage2D() in videoGL.h
@@ -67,7 +75,7 @@ void fontInit()
 				);
 
 	//Do the same with our bigger texture
-	largeFontTexId = largeFont.load(largeFontImages,
+	largeFont.load(1, largeFontImages,
 				LARGE_FONT_NUM_IMAGES,
 				large_font_texcoords,
 				GL_RGB16,
@@ -83,13 +91,13 @@ void fontInit()
 
 void reloadFontPalettes() {
 	u16 cmpFontPal[4];
-	glBindTexture(0, largeFontTexId);
+	glBindTexture(0, 0);
 	glGetColorTableEXT(0,0,0,cmpFontPal);
 	if (memcmp(cmpFontPal, large_fontPal, sizeof(cmpFontPal)) != 0) {
 		glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) large_fontPal);
 	}
 
-	glBindTexture(0, smallFontTexId);
+	glBindTexture(0, 1);
 	glGetColorTableEXT(0,0,0,cmpFontPal);
 	if (memcmp(cmpFontPal, large_fontPal, sizeof(cmpFontPal)) != 0) {
 		glColorSubTableEXT(0, 0, 4, 0, 0, (u16*) small_fontPal);

@@ -83,6 +83,8 @@ extern bool titleboxXmoveright;
 
 extern bool applaunchprep;
 
+extern touchPosition touch;
+
 extern bool showdialogbox;
 
 extern std::string romfolder;
@@ -615,11 +617,15 @@ string browseForFile(const vector<string> extensionList, const char* username)
 			{
 				scanKeys();
 				pressed = keysDownRepeat();
+				touchRead(&touch);
 				swiWaitForVBlank();
 			}
 			while (!pressed);
 
-			if ((pressed & KEY_LEFT) && !titleboxXmoveleft && !titleboxXmoveright) {
+			if (((pressed & KEY_LEFT) && !titleboxXmoveleft && !titleboxXmoveright)
+			|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px < 96 && !titleboxXmoveleft && !titleboxXmoveright)		// Title box
+			|| ((pressed & KEY_TOUCH) && touch.py > 171 && touch.px < 19 && theme == 0 && !titleboxXmoveleft && !titleboxXmoveright))		// Button arrow (DSi theme)
+			{
 				if (startMenu) {
 					startMenu_cursorPosition -= 1;
 					if (startMenu_cursorPosition >= 0) {
@@ -642,10 +648,14 @@ string browseForFile(const vector<string> extensionList, const char* username)
 					if(cursorPosition >= 2 && cursorPosition <= 36) {
 						if (bnrRomType[cursorPosition-2] == 0 && (cursorPosition-2)+pagenum*40 < file_count) {
 							iconUpdate(dirContents[scrn].at((cursorPosition-2)+pagenum*40).isDirectory, dirContents[scrn].at((cursorPosition-2)+pagenum*40).name.c_str(), cursorPosition-2);
+							fontInit();		// Reload font to avoid font corruption
 						}
 					}
 				}
-			} else if ((pressed & KEY_RIGHT) && !titleboxXmoveleft && !titleboxXmoveright) {
+			} else if (((pressed & KEY_RIGHT) && !titleboxXmoveleft && !titleboxXmoveright)
+					|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px > 160 && !titleboxXmoveleft && !titleboxXmoveright)		// Title box
+					|| ((pressed & KEY_TOUCH) && touch.py > 171 && touch.px > 236 && theme == 0 && !titleboxXmoveleft && !titleboxXmoveright))		// Button arrow (DSi theme)
+			{
 				if (startMenu) {
 					startMenu_cursorPosition += 1;
 					if (startMenu_cursorPosition <= 39) {
@@ -668,6 +678,7 @@ string browseForFile(const vector<string> extensionList, const char* username)
 					if(cursorPosition >= 3 && cursorPosition <= 37) {
 						if (bnrRomType[cursorPosition+2] == 0 && (cursorPosition+2)+pagenum*40 < file_count) {
 							iconUpdate(dirContents[scrn].at((cursorPosition+2)+pagenum*40).isDirectory, dirContents[scrn].at((cursorPosition+2)+pagenum*40).name.c_str(), cursorPosition+2);
+							fontInit();		// Reload font to avoid font corruption
 						}
 					}
 				}
@@ -700,7 +711,9 @@ string browseForFile(const vector<string> extensionList, const char* username)
 				pressedToLaunch = (pressed & KEY_A);
 			}
 
-			if (pressedToLaunch && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder)
+			if ((pressedToLaunch && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder)
+			|| ((pressed & KEY_TOUCH) && touch.py > 88 && touch.py < 144 && touch.px > 96 && touch.px < 160 && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder)
+			|| ((pressed & KEY_TOUCH) && touch.py > 170 && theme == 1 && !titleboxXmoveleft && !titleboxXmoveright && showSTARTborder))											// START button/text (3DS theme)
 			{
 				if ((startMenu_cursorPosition == 0 && startMenu)
 				|| (startMenu_cursorPosition == 1 && startMenu)
