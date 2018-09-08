@@ -28,6 +28,7 @@
 #include "../include/startborderpal.h"
 
 #include "graphics/ThemeTextures.h"
+#include "graphics/OamControl.h"
 
 #include "queueControl.h"
 #include "uvcoord_top_font.h"
@@ -300,32 +301,6 @@ void startMenu_moveIconClose(int num) {
 		else if (startMenu_cursorPosition+2 == num) movecloseXpos = -6;
 		else movecloseXpos = 0;
 	}
-}
-
-//-------------------------------------------------------
-// set up a 2D layer construced of bitmap sprites
-// this holds the image when rendering to the top screen
-//-------------------------------------------------------
-
-void initSubSprites(void)
-{
-
-	oamInit(&oamSub, SpriteMapping_Bmp_2D_256, false);
-	int id = 0;
-
-	//set up a 4x3 grid of 64x64 sprites to cover the screen
-	for (int y = 0; y < 3; y++)
-		for (int x = 0; x < 4; x++)
-		{
-			oamSub.oamMemory[id].attribute[0] = ATTR0_BMP | ATTR0_SQUARE | (64 * y);
-			oamSub.oamMemory[id].attribute[1] = ATTR1_SIZE_64 | (64 * x);
-			oamSub.oamMemory[id].attribute[2] = ATTR2_ALPHA(1) | (8 * 32 * y) | (8 * x);
-			++id;
-		}
-
-	swiIntrWait(0, 1);
-
-	oamUpdate(&oamSub);
 }
 
 void bottomBgLoad(bool drawBubble, bool init = false) {
@@ -1278,17 +1253,17 @@ void graphicsInit()
 	// sprites
 	vramSetBankA(VRAM_A_TEXTURE);
 	vramSetBankB(VRAM_B_TEXTURE);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
+	vramSetBankC(VRAM_C_MAIN_BG_0x06000000);
+	vramSetBankD(VRAM_D_SUB_SPRITE);
 	vramSetBankE(VRAM_E_TEX_PALETTE);
 	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
 	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
 	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
+	vramSetBankI(VRAM_I_SUB_SPRITE);
 
 //	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything... 
 	lcdMainOnBottom();
-	
+	oam().sysinitSub();
 	REG_BG3CNT_SUB = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
 	REG_BG3X_SUB = 0;
 	REG_BG3Y_SUB = 0;
@@ -1309,7 +1284,7 @@ void graphicsInit()
 		titleboxYpos = 96;
 		bubbleYpos += 18;
 		bubbleXpos += 3;
-		topBgLoad();
+		//topBgLoad();
 		bottomBgLoad(false, true);
 	} else {
 		switch(subtheme) {
@@ -1339,7 +1314,8 @@ void graphicsInit()
 				tex().loadDSiPurpleTheme();
 				break;
 		}
-		topBgLoad();
+		//topBgLoad();
+		oam().initTopBg(tex().topBgPath);
 		bottomBgLoad(false, true);
 	}
 
