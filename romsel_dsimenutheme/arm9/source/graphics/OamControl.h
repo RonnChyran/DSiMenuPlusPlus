@@ -14,6 +14,8 @@ class OamControl
 {
   public:
     void initTopBg(const std::string path);
+    void initTopPicture();
+
     void sysinitMain();
     void sysinitSub();
 
@@ -22,7 +24,11 @@ class OamControl
 
   private:
     vector<Sprite> _topBackgroundSprites;
+    vector<Sprite> _topPictureSprites;
+
     BMP15 _topBackground;
+    BMP15 _topPhoto;
+
 };
 
 typedef singleton<OamControl> oamControl_s;

@@ -1253,8 +1253,8 @@ void graphicsInit()
 	// sprites
 	vramSetBankA(VRAM_A_TEXTURE);
 	vramSetBankB(VRAM_B_TEXTURE);
-	vramSetBankC(VRAM_C_MAIN_BG_0x06000000);
-	vramSetBankD(VRAM_D_SUB_SPRITE);
+	vramSetBankC(VRAM_C_SUB_BG);
+	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
 	vramSetBankE(VRAM_E_TEX_PALETTE);
 	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
 	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
@@ -1284,7 +1284,7 @@ void graphicsInit()
 		titleboxYpos = 96;
 		bubbleYpos += 18;
 		bubbleXpos += 3;
-		//topBgLoad();
+		topBgLoad();
 		bottomBgLoad(false, true);
 	} else {
 		switch(subtheme) {
@@ -1314,8 +1314,8 @@ void graphicsInit()
 				tex().loadDSiPurpleTheme();
 				break;
 		}
-		//topBgLoad();
-		oam().initTopBg(tex().topBgPath);
+		topBgLoad();
+		//oam().initTopBg(tex().topBgPath);
 		bottomBgLoad(false, true);
 	}
 
