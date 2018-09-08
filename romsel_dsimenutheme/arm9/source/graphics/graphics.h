@@ -28,7 +28,7 @@ void loadShoulders();
 void graphicsInit();
 void startRendering(bool top);
 bool isRenderingTop();
-
+void presentSubBg();
 template<typename T> inline const T abs(T const & x)
 {
 	return ( x < 0) ? -x : x;

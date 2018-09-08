@@ -28,7 +28,6 @@
 #include "../include/startborderpal.h"
 
 #include "graphics/ThemeTextures.h"
-#include "graphics/OamControl.h"
 
 #include "queueControl.h"
 #include "uvcoord_top_font.h"
@@ -91,6 +90,7 @@ int titleboxYmovepos = 0;
 extern int spawnedtitleboxes;
 
 extern bool startMenu;
+bool boxArtQueued;
 
 extern int theme;
 extern int subtheme;
@@ -135,6 +135,7 @@ float dbox_movespeed = 22;
 float dbox_Ypos = -192;
 
 int bottomBg;
+int drawLayer;
 
 int bottomBgState = 0; // 0 = Uninitialized 1 = No Bubble 2 = bubble.
 
@@ -142,6 +143,9 @@ int vblankRefreshCounter = 0;
 
 int bubbleYpos = 80;
 int bubbleXpos = 122;
+
+u16 subBuffer[256 * 192];
+std::string boxArtPath;
 
 void vramcpy_ui (void* dest, const void* src, int size) 
 {
@@ -303,6 +307,7 @@ void startMenu_moveIconClose(int num) {
 	}
 }
 
+
 void bottomBgLoad(bool drawBubble, bool init = false) {
 	if (init || (!drawBubble && bottomBgState == 2)) {
 		tex().drawBg(bottomBg);
@@ -354,6 +359,7 @@ void vBlankHandler()
 {
 	execQueue(); // Execute any actions queued during last vblank.
 	execDeferredIconUpdates(); // Update any icons queued during last vblank.
+	presentSubBg();
 	if (theme == 1 && waitBeforeMusicPlay) {
 		if (waitBeforeMusicPlayTime == 60) {
 			mmEffectEx(&mus_menu);
@@ -784,6 +790,7 @@ void vBlankHandler()
 				vblankRefreshCounter++;
 			}
 			updateText(false);
+			bgUpdate();
 			glColor(RGB15(31, 31, 31));
 		//}
 	}
@@ -849,9 +856,10 @@ void vBlankHandler()
 void clearBmpScreen() {
 	u16 val = 0xFFFF;
 	for (int i = 0; i < 256*192; i++) {
-		BG_GFX_SUB[i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+		subBuffer[i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 	}
 }
+
 
 void loadBoxArt(const char* filename) {
 	FILE* file = fopen(filename, "rb");
@@ -868,13 +876,13 @@ void loadBoxArt(const char* filename) {
 			u16* src = buffer;
 			for (int i=0; i<128; i++) {
 				u16 val = *(src++);
-				BG_GFX_SUB[(y+40)*256+(i+64)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+				subBuffer[(y+40)*256+(i+64)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 			}
 		}
 	}
-
 	fclose(file);
 }
+
 
 void loadPhoto() {
 	FILE* file = fopen("fat:/_nds/dsimenuplusplus/photo.bmp", "rb");
@@ -892,7 +900,7 @@ void loadPhoto() {
 			u16* src = buffer;
 			for (int i=0; i<208; i++) {
 				u16 val = *(src++);
-				BG_GFX_SUB[(y+24)*256+(i+24)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+				subBuffer[(y+24)*256+(i+24)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 			}
 		}
 	}
@@ -918,7 +926,7 @@ void loadPhotoPart() {
 				u16* src = buffer;
 				for (int i=0; i<208; i++) {
 					u16 val = *(src++);
-					BG_GFX_SUB[(y+24)*256+(i+24)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+					subBuffer[(y+24)*256+(i+24)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 				}
 			}
 		}
@@ -942,7 +950,7 @@ void loadBMP(const char* filename) {
 			for (int i=0; i<256; i++) {
 				u16 val = *(src++);
 				if (val != 0xFC1F) {	// Do not render magneta pixel
-					BG_GFX_SUB[y*256+i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+					subBuffer[y*256+i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 				}
 			}
 		}
@@ -968,7 +976,7 @@ void loadBMPPart(const char* filename) {
 				for (int i=0; i<256; i++) {
 					u16 val = *(src++);
 					if (val != 0xFC1F) {	// Do not render magneta pixel
-						BG_GFX_SUB[y*256+i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+						subBuffer[y*256+i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 					}
 				}
 			}
@@ -1001,7 +1009,7 @@ void loadShoulders() {
 			for (int i=0; i<78; i++) {
 				u16 val = *(src++);
 				if (val != 0xFC1F) {	// Do not render magneta pixel
-					BG_GFX_SUB[(y+172)*256+i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+					subBuffer[(y+172)*256+i] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 				}
 			}
 		}
@@ -1030,13 +1038,26 @@ void loadShoulders() {
 			for (int i=0; i<78; i++) {
 				u16 val = *(src++);
 				if (val != 0xFC1F) {	// Do not render magneta pixel
-					BG_GFX_SUB[(y+172)*256+(i+178)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+					subBuffer[(y+172)*256+(i+178)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 				}
 			}
 		}
 	}
 
 	fclose(file);
+}
+
+void presentSubBg()
+{
+	DC_FlushRange((void*) subBuffer, 256 * 192 * 2);
+    dmaCopyWords(3, (void*) subBuffer, BG_GFX_SUB, 256 * 192 * 2);
+	//dmaCopyWords(3, (void*) subBuffer,  bgGetGfxPtr(drawLayer), 256 * 192 * 2);
+    DC_InvalidateRange(BG_GFX_SUB, 256 * 192 * 2);
+//	DC_InvalidateRange(bgGetGfxPtr(drawLayer), 256 * 192 * 2);
+
+	//swiFastCopy((void*)(0xffffffff), subBuffer, (0x18000>>2) | COPY_MODE_WORD | COPY_MODE_FILL);
+
+
 }
 
 /**
@@ -1114,7 +1135,7 @@ void topBgLoad() {
 
 				for (int i=0; i < top_font_texcoords[2+(4*charIndex)]; i++) {
 					u16 val = *(src++);
-					u16 bg = BG_GFX_SUB[(y+1)*256+(i+x)]; //grab the background pixel
+					u16 bg = subBuffer[(y+1)*256+(i+x)]; //grab the background pixel
 					// Apply palette here.
 					
 					// Magic numbers were found by dumping val to stdout
@@ -1137,7 +1158,7 @@ void topBgLoad() {
 							break;
 					}
 					if (val != 0xFC1F) {	// Do not render magneta pixel
-						BG_GFX_SUB[(y+1)*256+(i+x)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
+						subBuffer[(y+1)*256+(i+x)] = ((val>>10)&0x1f) | ((val)&(0x1f<<5)) | (val&0x1f)<<10 | BIT(15);
 					}
 				}
 			}
@@ -1236,7 +1257,7 @@ void graphicsInit()
 	SetBrightness(1, 31);
 
 	////////////////////////////////////////////////////////////
-	videoSetMode(MODE_5_3D | DISPLAY_BG2_ACTIVE);
+	videoSetMode(MODE_5_3D  | DISPLAY_BG3_ACTIVE |  DISPLAY_BG2_ACTIVE);
 	videoSetModeSub(MODE_3_2D | DISPLAY_BG3_ACTIVE);
 
 	// Initialize gl2d
@@ -1253,17 +1274,17 @@ void graphicsInit()
 	// sprites
 	vramSetBankA(VRAM_A_TEXTURE);
 	vramSetBankB(VRAM_B_TEXTURE);
-	vramSetBankC(VRAM_C_SUB_BG);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
 	vramSetBankE(VRAM_E_TEX_PALETTE);
 	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
 	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
 	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-	vramSetBankI(VRAM_I_SUB_SPRITE);
+	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
 
 //	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything... 
 	lcdMainOnBottom();
-	oam().sysinitSub();
+	
 	REG_BG3CNT_SUB = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
 	REG_BG3X_SUB = 0;
 	REG_BG3Y_SUB = 0;
@@ -1275,8 +1296,12 @@ void graphicsInit()
 	if (theme < 1) loadPhoto();
 
 	// Initialize the bottom background
-	bottomBg = bgInit(2, BgType_ExRotation, BgSize_ER_256x256, 0,1);
-	
+	drawLayer = bgInit(2, BgType_Bmp16, BgSize_B16_256x256, 2, 0);
+	bottomBg = bgInit(3, BgType_ExRotation, BgSize_ER_256x256, 0,1);
+	bgSetPriority(bottomBg, 3);
+	bgSetPriority(drawLayer, 0);
+	REG_BG0CNT = REG_BG0CNT | BG_PRIORITY(1); 
+	bgShow(drawLayer);
 	swiIntrWait(0, 1);
 
 	if (theme == 1) {
@@ -1315,7 +1340,6 @@ void graphicsInit()
 				break;
 		}
 		topBgLoad();
-		//oam().initTopBg(tex().topBgPath);
 		bottomBgLoad(false, true);
 	}
 
