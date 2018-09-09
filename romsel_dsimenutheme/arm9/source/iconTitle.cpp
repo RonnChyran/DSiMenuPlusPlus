@@ -32,6 +32,7 @@
 #include "flashcard.h"
 #include "graphics/iconHandler.h"
 #include "graphics/queueControl.h"
+#include "graphics/DrawLayer.h"
 
 #include "icon_unk.h"
 
@@ -166,7 +167,8 @@ void drawIcon(int Xpos, int Ypos, int num)
 		num2 -= 6;
 	}
 	//glSprite(Xpos, Ypos, bannerFlip[num], &ndsIcon[num2][bnriconPalLine[num]][bnriconframenumY[num] & 31]);
-	glSprite(Xpos, Ypos, GL_FLIP_NONE, &getIcon(num2)[bnriconframenumY[num] & 31]);
+	//glSprite(Xpos, Ypos, GL_FLIP_NONE, &getIcon(num2)[bnriconframenumY[num] & 31]);
+	drw().drawIcon((u8)Xpos, (u8)Ypos, num);
 }
 
 void drawIconGBA(int Xpos, int Ypos)
@@ -698,6 +700,8 @@ void iconUpdate(bool isDir, const char* name, int num)
 		loadFixedBanner();
 
 		// icon
+		DC_FlushAll();
+		drw().setIconBanner(num, &ndsBanner);
 		DC_FlushAll();
 		if(animateDsiIcons && ndsBanner.version == NDS_BANNER_VER_DSi) {
 			loadIcon(ndsBanner.dsi_icon[0], ndsBanner.dsi_palette[0], num, true);

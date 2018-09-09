@@ -28,7 +28,7 @@
 #include "../include/startborderpal.h"
 
 #include "graphics/ThemeTextures.h"
-
+#include "graphics/DrawLayer.h"
 #include "queueControl.h"
 #include "uvcoord_top_font.h"
 
@@ -360,6 +360,7 @@ void vBlankHandler()
 	execQueue(); // Execute any actions queued during last vblank.
 	execDeferredIconUpdates(); // Update any icons queued during last vblank.
 	presentSubBg();
+	drw().presentBuffer(drawLayer);
 	if (theme == 1 && waitBeforeMusicPlay) {
 		if (waitBeforeMusicPlayTime == 60) {
 			mmEffectEx(&mus_menu);
@@ -1280,8 +1281,9 @@ void graphicsInit()
 	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
 	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
 	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
+	vramSetBankI(VRAM_I_SUB_SPRITE);
 
+	drw();
 //	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything... 
 	lcdMainOnBottom();
 	
