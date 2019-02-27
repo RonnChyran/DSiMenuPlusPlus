@@ -272,7 +272,6 @@ void ThemeTextures::load3DSTheme() {
 
 	loadVolumeTextures();
 	loadBatteryTextures();
-
 	loadIconTextures();
 	loadDateFont(_dateTimeFontTexture->texture());
 
