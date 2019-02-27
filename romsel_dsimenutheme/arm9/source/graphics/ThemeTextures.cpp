@@ -462,8 +462,9 @@ void ThemeTextures::commitSubModifyAsync() {
 }
 
 void ThemeTextures::drawTopBg() {
-	beginSubModify();
 	const u16 *src = _topBackgroundTexture->texture();
+	if (src == NULL) return;
+	beginSubModify();
 	int x = 0;
 	int y = 191;
 	for (int i = 0; i < BG_BUFFER_PIXELCOUNT; i++) {
@@ -482,16 +483,19 @@ void ThemeTextures::drawTopBg() {
 }
 
 void ThemeTextures::drawBottomBg() {
+	if (_bottomBgImage.get() == NULL) return;
 	DC_FlushRange(_bottomBgImage.get(), 0x18000);
 	dmaCopyWords(0, _bottomBgImage.get(), BG_GFX, 0x18000);
 }
 
 void ThemeTextures::drawBottomBubbleBg() {
+	if (_bottomBubbleBgImage.get() == NULL) return;
 	DC_FlushRange(_bottomBubbleBgImage.get(), 0x18000);
 	dmaCopyWords(0, _bottomBubbleBgImage.get(), BG_GFX, 0x18000);
 }
 
 void ThemeTextures::drawBottomMovingBg() {
+	if (_bottomMovingBgImage.get() == NULL) return;
 	DC_FlushRange(_bottomMovingBgImage.get(), 0x18000);
 	dmaCopyWords(0, _bottomMovingBgImage.get(), BG_GFX, 0x18000);
 }
@@ -757,9 +761,10 @@ void ThemeTextures::drawBatteryImageCached() {
 
 // Load .bmp file without overwriting shoulder button images or username
 void ThemeTextures::drawTopBgAvoidingShoulders() {
+	const u16 *src = _topBackgroundTexture->texture();
+	if (src == NULL) return;
 	beginSubModify();
 
-	const u16 *src = _topBackgroundTexture->texture();
 	int x = 0;
 	int y = 191;
 	for (int i = 0; i < BG_BUFFER_PIXELCOUNT; i++) {
