@@ -2,11 +2,13 @@
 
 The easiest way of customizing a theme is by editing the BMP textures in a theme's *ui*, *battery*, or *volume* folder. These BMP textures must be in RGB565 format, and use `#FF00FF` as a transparent key color. BMP textures are allowed to vary in size, but may require tweaking of the theme configuration to render correctly (see below).
 
-Changes to paletted textures are more involved. Within the *grit* folder of a theme, the various image files may be edited. You will also require [devkitPro](https://devkitpro.org) with GRIT installed. Once you have finished editing your files, you must run
+Changes to paletted textures, or backgrounds are more involved. Within the *grit* or *background_grit* folder of a theme, the various image files may be edited. You will also require [devkitPro](https://devkitpro.org) with GRIT installed. Once you have finished editing your files, you must run
 
 ```bash
 $ make
 ```
+
+Do not make any changes to the *.grit* file until you have read the section below on advanced theming.
 
 In order to compile your themes into Grit RIFF Format. This will compile your paletted textures into **.grf** format in the *grf* folder.
 
@@ -17,18 +19,23 @@ Be aware the paletted textures come with more restrictions than BMP textures, th
 *volume* and *battery* textures are self explanatory.
 
 ### UI Textures
+| Texture          | Description                                             |
+| ---------------- | ------------------------------------------------------- |
+| date_time_font   | The font to display the date and time                   |
+| Lshoulder        | The left shoulder                                       |
+| Lshoulder_greyed | The left shoulder when there are no pages to the left   |
+| Rshoulder        | The right shoulder                                      |
+| Rshoulder_greyed | The right shoulder when there are no pages to the right |
+| top              | The top background                                      |
+
+#### Background Textures
 | Texture          | Description                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------- |
 | bottom           | The bottom background texture when not hovering over an icon                                      |
 | bottom_bubble    | The bottom background texture when hovering over an icon                                          |
 | bottom_bubble_ds | For the 3DS theme, the bottom background texture when hovering over an icon when on a DS lite     |
 | bottom_ds        | For the 3DS theme, the bottom background texture when not hovering over an icon when on a DS lite |
-| date_time_font   | The font to display the date and time                                                             |
-| Lshoulder        | The left shoulder                                                                                 |
-| Lshoulder_greyed | The left shoulder when there are no pages to the left                                             |
-| Rshoulder        | The right shoulder                                                                                |
-| Rshoulder_greyed | The right shoulder when there are no pages to the right                                           |
-| top              | The top background                                                                                |
+| bottom_moving    | The bottom background texture when moving an icon on the DSi Theme                                |
 
 ### Paletted Textures
 | Texture       | Description                                                                                          | Palette Restrictions (if less than 16)                          |
@@ -96,7 +103,7 @@ You may configure various options on how the theme is drawn in the `theme.ini`, 
 | `DialogBoxUserPalette`   | Assign the DSi Profile Theme Palette to the palette of the dialog box                                        | N/A           | 1             |
 #### Advanced Theming
 
-Occasionally, you may require more than the default number of colors for some paletted textures. In such cases, you may modify the `.grit` compilation file for the texture to increase the size of the palette.
+Occasionally, you may require more than the default number of colors for some paletted textures. In such cases, you may modify the `.grit` compilation file for the texture to increase the size of the palette. Note that the `.grit` files for backgrounds **should not** be changed. The background files are not paletted, but losslessly compressed, and you are allowed full 16-bit full color in backgrounds.
 
 For example, in `scroll_window.grit`, you may edit `-pn7` and change `7` to `16` for 16 colors. Be aware that if you remove the entire `-pn` line, you may encounter unexpected results.
 
