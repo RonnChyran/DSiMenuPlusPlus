@@ -434,7 +434,7 @@ void ThemeTextures::drawBottomBg(int index) {
 		previouslyDrawnBottomBg = index;
 	} else {
 		DC_FlushRange(_backgroundTextures[index].texture(), 0x18000);
-		dmaCopyWords(0, _backgroundTextures[index].texture(), BG_GFX, 0x18000);
+		dmaCopyWords(0, _backgroundTextures[index].texture(), BG_GFX, 0x18000);		
 		LZ77_Decompress((u8*)_backgroundTextures[index].texture(), (u8*)_bgMainBuffer);
 	}
 
@@ -445,6 +445,7 @@ void ThemeTextures::drawBottomBg(int index) {
 		}
 	}
 
+	dmaCopyWords(0, _bgSubBuffer, ((u16*)0x6018000), 0x18000);
 	commitBgMainModify();
 }
 
@@ -942,7 +943,7 @@ u16 *ThemeTextures::bmpImageBuffer() { return _bmpImageBuffer; }
 
 void ThemeTextures::videoSetup() {
 	//////////////////////////////////////////////////////////
-	videoSetMode(MODE_5_3D | DISPLAY_BG3_ACTIVE);
+	videoSetMode(MODE_5_3D | DISPLAY_BG3_ACTIVE | DISPLAY_BG2_ACTIVE);
 	videoSetModeSub(MODE_3_2D | DISPLAY_BG3_ACTIVE);
 
 	// Initialize gl2d
@@ -970,13 +971,24 @@ void ThemeTextures::videoSetup() {
 	//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything...
 	lcdMainOnBottom();
 
-	REG_BG3CNT = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
+	REG_BG3CNT = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(3);
 	REG_BG3X = 0;
 	REG_BG3Y = 0;
 	REG_BG3PA = 1 << 8;
 	REG_BG3PB = 0;
 	REG_BG3PC = 0;
 	REG_BG3PD = 1 << 8;
+
+	REG_BG0CNT =  BG_PRIORITY(2);
+	
+	REG_BG2CNT =  BG_MAP_BASE(6) | BG_BMP16_256x256 | BG_PRIORITY(0);
+	REG_BG2X = 0;
+	REG_BG2Y = 0;
+	REG_BG2PA = 1 << 8;
+	REG_BG2PB = 0;
+	REG_BG2PC = 0;
+	REG_BG2PD = 1 << 8;
+
 
 	REG_BG3CNT_SUB = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
 	REG_BG3X_SUB = 0;
