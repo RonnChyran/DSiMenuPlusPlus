@@ -64,6 +64,7 @@ public:
 
   void clearTopScreen();
   static void videoSetup();
+  static void oamSetup();
 private:
   void applyGrayscaleToAllGrfTextures();
 

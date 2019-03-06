@@ -564,7 +564,7 @@ int main(int argc, char **argv) {
 	tfn(); //
 	tc().loadConfig();
 	tex().videoSetup(); // allocate texture pointers
-
+	tex().oamSetup();
 	fontInit();
 
 	if (ms().theme == 1) {

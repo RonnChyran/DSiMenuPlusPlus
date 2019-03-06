@@ -2,9 +2,9 @@
 #include "ThemeTextures.h"
 #include "ThemeConfig.h"
 
-#include <nds.h>
 #include "common/dsimenusettings.h"
 #include "common/systemdetails.h"
+#include <nds.h>
 
 #include "paletteEffects.h"
 #include "themefilenames.h"
@@ -12,14 +12,15 @@
 // Graphic files
 #include "../include/startborderpal.h"
 
+#include "bmp15.h"
 #include "color.h"
+#include "common/lzss.h"
+#include "common/tonccpy.h"
 #include "errorScreen.h"
+#include "sprite.h"
 #include "tool/stringtool.h"
 #include "uvcoord_date_time_font.h"
 #include "uvcoord_top_font.h"
-#include "common/lzss.h"
-#include "common/tonccpy.h"
-
 
 // #include <nds/arm9/decompress.h>
 // extern u16 bmpImageBuffer[256*192];
@@ -28,6 +29,7 @@ extern s16 usernameRendered[11];
 static u16 _bmpImageBuffer[256 * 192] = {0};
 static u16 _bgMainBuffer[256 * 192] = {0};
 static u16 _bgSubBuffer[256 * 192] = {0};
+static Sprite _sprites[12];
 
 ThemeTextures::ThemeTextures()
     : previouslyDrawnBottomBg(-1), bubbleTexID(0), bipsTexID(0), scrollwindowTexID(0), buttonarrowTexID(0),
@@ -184,8 +186,7 @@ void ThemeTextures::loadBackgrounds() {
 
 	// We reuse the _topBackgroundTexture as a buffer.
 	_backgroundTextures.emplace_back(TFN_BG_TOPBG, TFN_FALLBACK_BG_TOPBG);
-		
-	
+
 	if (ms().theme == 1 && !sys().isRegularDS()) {
 		_backgroundTextures.emplace_back(TFN_BG_BOTTOMBG, TFN_FALLBACK_BG_BOTTOMBG);
 		_backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG, TFN_FALLBACK_BG_BOTTOMBUBBLEBG);
@@ -201,7 +202,6 @@ void ThemeTextures::loadBackgrounds() {
 	_backgroundTextures.emplace_back(TFN_BG_BOTTOMBG, TFN_FALLBACK_BG_BOTTOMBG);
 	_backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG, TFN_FALLBACK_BG_BOTTOMBUBBLEBG);
 	_backgroundTextures.emplace_back(TFN_BG_BOTTOMMOVINGBG, TFN_FALLBACK_BG_BOTTOMMOVINGBG);
-	
 }
 
 void ThemeTextures::load3DSTheme() {
@@ -245,15 +245,15 @@ void ThemeTextures::load3DSTheme() {
 	loadWirelessIcons(*_wirelessIconsTexture);
 }
 
-void ThemeTextures::loadDSiTheme() {	
+void ThemeTextures::loadDSiTheme() {
 
 	loadBackgrounds();
 	loadUITextures();
-		
+
 	loadVolumeTextures();
 	loadBatteryTextures();
 	loadIconTextures();
-	
+
 	loadDateFont(_dateTimeFontTexture->texture());
 
 	_bipsTexture = std::make_unique<Texture>(TFN_GRF_BIPS, TFN_FALLBACK_GRF_BIPS);
@@ -297,7 +297,6 @@ void ThemeTextures::loadDSiTheme() {
 
 	loadBipsImage(*_bipsTexture);
 
-	
 	loadBubbleImage(*_bubbleTexture, tc().bubbleTipSpriteW(), tc().bubbleTipSpriteH());
 	loadScrollwindowImage(*_scrollWindowTexture);
 	loadWirelessIcons(*_wirelessIconsTexture);
@@ -306,7 +305,7 @@ void ThemeTextures::loadDSiTheme() {
 
 	loadStartImage(*_startTextTexture);
 	loadStartbrdImage(*_startBorderTexture, tc().startBorderSpriteH());
-	
+
 	loadButtonarrowImage(*_buttonArrowTexture);
 	loadMovingarrowImage(*_movingArrowTexture);
 	loadLaunchdotImage(*_launchDotTexture);
@@ -318,10 +317,9 @@ void ThemeTextures::loadDSiTheme() {
 	loadCornerButtonImage(*_cornerButtonTexture, (32 / 16) * (32 / 32), 32, 32);
 	loadSmallCartImage(*_smallCartTexture);
 	loadFolderImage(*_folderTexture);
-	
+
 	loadProgressImage(*_progressTexture);
 	loadWirelessIcons(*_wirelessIconsTexture);
-	
 }
 void ThemeTextures::loadVolumeTextures() {
 	if (isDSiMode()) {
@@ -414,11 +412,15 @@ void ThemeTextures::commitBgMainModifyAsync() {
 
 void ThemeTextures::drawTopBg() {
 	beginBgSubModify();
-	LZ77_Decompress((u8*)_backgroundTextures[0].texture(), (u8*)_bgSubBuffer);
+	LZ77_Decompress((u8 *)_backgroundTextures[0].texture(), (u8 *)_bgSubBuffer);
 	commitBgSubModify();
 }
 
+static char buf[256];
+
 void ThemeTextures::drawBottomBg(int index) {
+
+	// bgTex = createBMP15FromFile("nitro:/_nds/twilightmenu/dsimenu/themes/dark/bottom_moving.bmp");
 
 	// clamp index
 	if (index < 1)
@@ -430,22 +432,41 @@ void ThemeTextures::drawBottomBg(int index) {
 	beginBgMainModify();
 
 	if (previouslyDrawnBottomBg != index) {
-		LZ77_Decompress((u8*)_backgroundTextures[index].texture(), (u8*)_bgMainBuffer);
+		LZ77_Decompress((u8 *)_backgroundTextures[index].texture(), (u8 *)_bgMainBuffer);
 		previouslyDrawnBottomBg = index;
 	} else {
 		DC_FlushRange(_backgroundTextures[index].texture(), 0x18000);
 		dmaCopyWords(0, _backgroundTextures[index].texture(), BG_GFX, 0x18000);
-		LZ77_Decompress((u8*)_backgroundTextures[index].texture(), (u8*)_bgMainBuffer);
+		LZ77_Decompress((u8 *)_backgroundTextures[index].texture(), (u8 *)_bgMainBuffer);
 	}
 
-	if(ms().colorMode == 1) {
+	if (ms().colorMode == 1) {
 		for (u16 i = 0; i < BG_BUFFER_PIXELCOUNT; i++) {
-			_bgMainBuffer[i] =
-			    convertVramColorToGrayscale(_bgMainBuffer[i]);
+			_bgMainBuffer[i] = convertVramColorToGrayscale(_bgMainBuffer[i]);
 		}
 	}
 
+    // u32 pitch = bgTex.pitch() >> 1;
+	// sprintf(buf, "pitch: %i", pitch);
+	// nocashMessage(buf);
+    // for (size_t y = 0; y < 3; ++y)
+    // {
+    //     for (size_t x = 0; x < 4; ++x)
+    //     {
+    //         size_t index = y * 4 + x;
+
+    //         for (size_t k = 0; k < 64; ++k)
+    //         {
+    //             for (size_t l = 0; l < 64; ++l)
+    //             {
+    //                 ((u16 *)_sprites[index].buffer())[k * 64 + l] = ((u16 *)bgTex.buffer())[(k + y * 64) * pitch + (l + x * 64)];
+    //             }
+    //         }
+    //         _sprites[index].show();
+    //     }
+    // }
 	commitBgMainModify();
+	// oamUpdate(&oamMain);
 }
 
 void ThemeTextures::clearTopScreen() {
@@ -729,11 +750,11 @@ void ThemeTextures::drawTopBgAvoidingShoulders() {
 	dmaCopyWords(0, BG_GFX_SUB, _bmpImageBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
 
 	// Throw the entire top background into the sub buffer.
-	LZ77_Decompress((u8*)_backgroundTextures[0].texture(), (u8*)_bgSubBuffer);
+	LZ77_Decompress((u8 *)_backgroundTextures[0].texture(), (u8 *)_bgSubBuffer);
 
- 	// Copy top 32 lines from the buffer into the sub.
+	// Copy top 32 lines from the buffer into the sub.
 	tonccpy(_bgSubBuffer, _bmpImageBuffer, sizeof(u16) * TOPLINES);
-	
+
 	// Copy bottom tc().shoulderLRenderY() + 5 lines into the sub
 	// ((192 - 32) * 256)
 	tonccpy(_bgSubBuffer + BOTTOMOFFSET, _bmpImageBuffer + BOTTOMOFFSET, sizeof(u16) * BOTTOMLINES);
@@ -942,7 +963,7 @@ u16 *ThemeTextures::bmpImageBuffer() { return _bmpImageBuffer; }
 
 void ThemeTextures::videoSetup() {
 	//////////////////////////////////////////////////////////
-	videoSetMode(MODE_5_3D | DISPLAY_BG3_ACTIVE);
+	videoSetMode(MODE_5_3D | DISPLAY_BG2_ACTIVE | DISPLAY_BG3_ACTIVE);
 	videoSetModeSub(MODE_3_2D | DISPLAY_BG3_ACTIVE);
 
 	// Initialize gl2d
@@ -970,13 +991,21 @@ void ThemeTextures::videoSetup() {
 	//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything...
 	lcdMainOnBottom();
 
-	REG_BG3CNT = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
-	REG_BG3X = 0;
-	REG_BG3Y = 0;
+	REG_BG2CNT = BG_BMP16_256x256 | BG_BMP_BASE(8) | BG_PRIORITY(1);
+	REG_BG2PA = 1 << 8;
+	REG_BG2PD = 1 << 8;
+	REG_BG2PB = 0;
+	REG_BG2PC = 0;
+	REG_BG2Y = 0;
+	REG_BG2X = 0;
+
+	REG_BG3CNT = BG_BMP16_256x256 | BG_BMP_BASE(0) | BG_PRIORITY(2);
 	REG_BG3PA = 1 << 8;
+	REG_BG3PD = 1 << 8;
 	REG_BG3PB = 0;
 	REG_BG3PC = 0;
-	REG_BG3PD = 1 << 8;
+	REG_BG3Y = 0;
+	REG_BG3X = 0;
 
 	REG_BG3CNT_SUB = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
 	REG_BG3X_SUB = 0;
@@ -987,4 +1016,37 @@ void ThemeTextures::videoSetup() {
 	REG_BG3PD_SUB = 1 << 8;
 
 	REG_BLDCNT = BLEND_SRC_BG3 | BLEND_FADE_BLACK;
+}
+
+
+
+void ThemeTextures::oamSetup() {
+
+	oamInit(&oamMain, SpriteMapping_Bmp_1D_128, false);
+	// SpriteEntry *psprites = (SpriteEntry *)OAM;
+	// SpriteRotation * pspriteRotations = (SpriteRotation * )OAM;
+	for (int i = 0; i < 128; i++) {
+		oamMain.oamMemory[i].attribute[0] = ATTR0_DISABLED;
+		oamMain.oamMemory[i].attribute[1] = 0;
+		oamMain.oamMemory[i].attribute[2] = 0;
+		oamMain.oamMemory[i].filler = 0;
+	}
+
+	for (size_t y = 0; y < 3; ++y) {
+		for (size_t x = 0; x < 4; ++x) {
+			size_t index = y * 4 + x;
+
+			_sprites[index].init(index);
+			_sprites[index].setSize(SS_SIZE_64);
+			_sprites[index].setPriority(0);
+			_sprites[index].setBufferOffset(32 + index * 64);
+			_sprites[index].setPosition(x * 64, y * 64);
+			// _sprites[index].show();
+		}
+	}
+	oamEnable(&oamMain);
+	oamUpdate(&oamMain);
+
+	// DC_FlushRange( _sprites, 128 * sizeof(SpriteEntry) );
+	// dmaCopy( _sprites, OAM, 128 * sizeof(SpriteEntry) );
 }
