@@ -381,18 +381,36 @@ void ThemeTextures::loadIconTextures() {
 	// }
 }
 u16 *ThemeTextures::beginBgSubModify() {
-	dmaCopyWords(0, BG_GFX_SUB, _bgSubBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	// dmaCopyWords(0, BG_GFX_SUB, _bgSubBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
 	return _bgSubBuffer;
 }
 
+#define SCREEN_PITCH (SCREEN_WIDTH + (SCREEN_WIDTH & 1))
 void ThemeTextures::commitBgSubModify() {
 	DC_FlushRange(_bgSubBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
-	dmaCopyWords(2, _bgSubBuffer, BG_GFX_SUB, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+    for (size_t y = 0; y < 3; ++y)
+    {
+        for (size_t x = 0; x < 4; ++x)
+        {
+            size_t index = y * 4 + x;
+
+            for (size_t k = 0; k < 64; ++k)
+            {
+                for (size_t l = 0; l < 64; ++l)
+                {
+                    ((u16 *)_sprites[index].buffer())[k * 64 + l] = _bgSubBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
+                }
+            }
+            _sprites[index].show();
+        }
+    }
+	oamUpdate(&oamSub);
+	// dmaCopyWords(2, _bgSubBuffer, BG_GFX_SUB, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
 }
 
 void ThemeTextures::commitBgSubModifyAsync() {
 	DC_FlushRange(_bgSubBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
-	dmaCopyWordsAsynch(2, _bgSubBuffer, BG_GFX_SUB, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	// dmaCopyWordsAsynch(2, _bgSubBuffer, BG_GFX_SUB, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
 }
 
 u16 *ThemeTextures::beginBgMainModify() {
@@ -412,6 +430,7 @@ void ThemeTextures::commitBgMainModifyAsync() {
 
 void ThemeTextures::drawTopBg() {
 	beginBgSubModify();
+	
 	LZ77_Decompress((u8 *)_backgroundTextures[0].texture(), (u8 *)_bgSubBuffer);
 	commitBgSubModify();
 }
@@ -420,7 +439,6 @@ static char buf[256];
 
 void ThemeTextures::drawBottomBg(int index) {
 
-	// bgTex = createBMP15FromFile("nitro:/_nds/twilightmenu/dsimenu/themes/dark/bottom_moving.bmp");
 
 	// clamp index
 	if (index < 1)
@@ -445,28 +463,8 @@ void ThemeTextures::drawBottomBg(int index) {
 			_bgMainBuffer[i] = convertVramColorToGrayscale(_bgMainBuffer[i]);
 		}
 	}
-
-    // u32 pitch = bgTex.pitch() >> 1;
-	// sprintf(buf, "pitch: %i", pitch);
-	// nocashMessage(buf);
-    // for (size_t y = 0; y < 3; ++y)
-    // {
-    //     for (size_t x = 0; x < 4; ++x)
-    //     {
-    //         size_t index = y * 4 + x;
-
-    //         for (size_t k = 0; k < 64; ++k)
-    //         {
-    //             for (size_t l = 0; l < 64; ++l)
-    //             {
-    //                 ((u16 *)_sprites[index].buffer())[k * 64 + l] = ((u16 *)bgTex.buffer())[(k + y * 64) * pitch + (l + x * 64)];
-    //             }
-    //         }
-    //         _sprites[index].show();
-    //     }
-    // }
 	commitBgMainModify();
-	// oamUpdate(&oamMain);
+
 }
 
 void ThemeTextures::clearTopScreen() {
@@ -978,16 +976,25 @@ void ThemeTextures::videoSetup() {
 	// Set up enough texture memory for our textures
 	// Bank A is just 128kb and we are using 194 kb of
 	// sprites
-	vramSetBankA(VRAM_A_TEXTURE);
-	vramSetBankB(VRAM_B_TEXTURE);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
-	vramSetBankE(VRAM_E_TEX_PALETTE);
-	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
-	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
-	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
+	// vramSetBankA(VRAM_A_TEXTURE);
+	// vramSetBankB(VRAM_B_TEXTURE);
+	// vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+	// vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
+	// vramSetBankE(VRAM_E_TEX_PALETTE);
+	// vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
+	// vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
+	// vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
+	// vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
 
+vramSetBankA(VRAM_A_TEXTURE_SLOT0);
+vramSetBankB(VRAM_B_TEXTURE_SLOT1);
+vramSetBankC(VRAM_C_MAIN_BG_0x06000000);
+vramSetBankD(VRAM_D_SUB_SPRITE);
+vramSetBankE(VRAM_E_TEX_PALETTE);
+vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
+vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5);
+vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
+vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
 	//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything...
 	lcdMainOnBottom();
 
@@ -1022,14 +1029,16 @@ void ThemeTextures::videoSetup() {
 
 void ThemeTextures::oamSetup() {
 
-	oamInit(&oamMain, SpriteMapping_Bmp_1D_128, false);
+	bgTex = createBMP15FromFile("sd:/_nds/TWiLightMenu/dsimenu/themes/blue/bottom.bmp");
+
+	oamInit(&oamSub, SpriteMapping_Bmp_1D_128, false);
 	// SpriteEntry *psprites = (SpriteEntry *)OAM;
 	// SpriteRotation * pspriteRotations = (SpriteRotation * )OAM;
 	for (int i = 0; i < 128; i++) {
-		oamMain.oamMemory[i].attribute[0] = ATTR0_DISABLED;
-		oamMain.oamMemory[i].attribute[1] = 0;
-		oamMain.oamMemory[i].attribute[2] = 0;
-		oamMain.oamMemory[i].filler = 0;
+		oamSub.oamMemory[i].attribute[0] = ATTR0_DISABLED;
+		oamSub.oamMemory[i].attribute[1] = 0;
+		oamSub.oamMemory[i].attribute[2] = 0;
+		oamSub.oamMemory[i].filler = 0;
 	}
 
 	for (size_t y = 0; y < 3; ++y) {
@@ -1041,11 +1050,11 @@ void ThemeTextures::oamSetup() {
 			_sprites[index].setPriority(0);
 			_sprites[index].setBufferOffset(32 + index * 64);
 			_sprites[index].setPosition(x * 64, y * 64);
-			// _sprites[index].show();
+			_sprites[index].show();
 		}
 	}
-	oamEnable(&oamMain);
-	oamUpdate(&oamMain);
+	oamEnable(&oamSub);
+	oamUpdate(&oamSub);
 
 	// DC_FlushRange( _sprites, 128 * sizeof(SpriteEntry) );
 	// dmaCopy( _sprites, OAM, 128 * sizeof(SpriteEntry) );

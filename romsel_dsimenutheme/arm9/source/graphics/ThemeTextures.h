@@ -4,6 +4,7 @@
 #include "common/gl2d.h"
 #include "common/singleton.h"
 #include "Texture.h"
+#include "bmp15.h"
 #include <memory>
 #include <string>
 #include <algorithm>
@@ -64,7 +65,7 @@ public:
 
   void clearTopScreen();
   static void videoSetup();
-  static void oamSetup();
+  void oamSetup();
 private:
   void applyGrayscaleToAllGrfTextures();
 
@@ -199,7 +200,7 @@ public:
 
 private:
   int previouslyDrawnBottomBg;
-
+  BMP15 bgTex;
   vector<Texture> _backgroundTextures;
 
   unique_ptr<glImage[]> _progressImage;
