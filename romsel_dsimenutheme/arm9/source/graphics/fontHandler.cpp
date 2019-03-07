@@ -53,7 +53,7 @@ list<TextPane> panes;
 
 void fontInit()
 {
-	
+	return;
 	if (fontTextureID[0]) glDeleteTextures(1, &fontTextureID[0]);
 	smallFont.load(0, smallFontImages, // pointer to glImage array
 				SMALL_FONT_NUM_IMAGES, // Texture packer auto-generated #define
@@ -85,7 +85,7 @@ void fontInit()
 }
 
 void reloadFontPalettes() {
-
+	return;
 	glBindTexture(0, fontTextureID[0]);
 	glColorTableEXT(0, 0, 4, 0, 0, (u16*) small_fontPal);
 
@@ -95,6 +95,7 @@ void reloadFontPalettes() {
 }
 
 void reloadFontTextures() {
+	return;
 	glBindTexture(0, fontTextureID[0]);
 	glTexImage2D(0, 0, GL_RGB16, TEXTURE_SIZE_512, TEXTURE_SIZE_128, 0, TEXGEN_OFF | GL_TEXTURE_COLOR0_TRANSPARENT, (u8*) small_fontBitmap);
 

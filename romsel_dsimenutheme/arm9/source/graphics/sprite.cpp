@@ -46,8 +46,8 @@ void Sprite::init(u16 id)
     // _entry = ((SpriteEntry *)OAM) + _id;
     // _affine = ((SpriteRotation *)OAM) + _id;
 
-    _entry = &oamSub.oamMemory[_id];
-    _affine = &oamSub.oamRotationMemory[_id];
+    _entry = &oamMain.oamMemory[_id];
+    _affine = &oamMain.oamRotationMemory[_id];
 
     // initial x = 0, hidden, bitmap obj mode, square shape
     _entry->attribute[0] = ATTR0_DISABLED | ATTR0_BMP | ATTR0_SQUARE | 0;
@@ -68,27 +68,27 @@ void Sprite::init(u16 id)
 
 void Sprite::show()
 {
-    //oamSetHidden(&oamSub, _id, false);
+    //oamSetHidden(&oamMain, _id, false);
 
     _entry->attribute[0] = (_entry->attribute[0] & (~0x0300)) | ATTR0_ROTSCALE | ATTR0_BMP;
 }
 
 void Sprite::hide()
 {
-   // oamSetHidden(&oamSub, _id, true);
+   // oamSetHidden(&oamMain, _id, true);
     _entry->attribute[0] = (_entry->attribute[0] & (~0x0300)) | ATTR0_DISABLED;
 }
 
 void Sprite::setAlpha(u8 alpha)
 {
-    oamSetAlpha(&oamSub, _id, alpha);
+    oamSetAlpha(&oamMain, _id, alpha);
     // _alpha = alpha & 0x1f;
     // _entry->attribute[2] = (_entry->attribute[2] & (~0xf000)) | ATTR2_ALPHA(_alpha);
 }
 
 void Sprite::setPosition(u16 x, u8 y)
 {
-    oamSetXY(&oamSub, _id, x, y);
+    oamSetXY(&oamMain, _id, x, y);
 }
 
 void Sprite::setSize(SPRITE_SIZE size)
@@ -105,7 +105,7 @@ void Sprite::setShape(SPRITE_SHAPE shape)
 
 u16 *Sprite::buffer()
 {
-    return SPRITE_GFX_SUB + (_bufferOffset * 64);
+    return SPRITE_GFX + (_bufferOffset * 64);
 }
 
 //void Sprite::update()
@@ -142,7 +142,7 @@ void Sprite::setScale(float scaleX, float scaleY)
 
 void Sprite::setPriority(u8 priority)
 {
-    oamSetPriority(&oamSub, _id, priority);
+    oamSetPriority(&oamMain, _id, priority);
     _priority = priority;
     //_entry->attribute[2] = (_entry->attribute[2] & (~0x0C00)) | ATTR2_PRIORITY(_priority);
 }

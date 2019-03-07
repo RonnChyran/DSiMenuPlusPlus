@@ -389,6 +389,7 @@ void playRotatingCubesVideo(void) {
 			}
 			tex().commitBgSubModifyAsync();
 		}
+		
 		rocketVideo_frameDelay = 0;
 		rocketVideo_frameDelayEven = !rocketVideo_frameDelayEven;
 		rocketVideo_loadFrame = false;
