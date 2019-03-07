@@ -103,6 +103,7 @@ extern bool applaunchprep;
 int screenBrightness = 31;
 
 static int colonTimer = 0;
+//static int loadingSoundTimer = 30;
 
 int movetimer = 0;
 
@@ -177,6 +178,7 @@ void vramcpy_ui(void *dest, const void *src, int size) {
 }
 
 extern mm_sound_effect snd_stop;
+//extern mm_sound_effect snd_loading;
 extern mm_sound_effect mus_menu;
 
 void ClearBrightness(void) {
@@ -399,20 +401,20 @@ void vBlankHandler() {
 	execQueue();		   // Execute any actions queued during last vblank.
 	execDeferredIconUpdates(); // Update any icons queued during last vblank.
 
-	if (ms().theme == 1 && waitBeforeMusicPlay) {
-		if (waitBeforeMusicPlayTime == 60 * 3) {
+	if (ms().theme == 0 && ms().dsiMusic != 2) waitBeforeMusicPlay = false;
+
+	if (music && waitBeforeMusicPlay) {
+		if (waitBeforeMusicPlayTime == (ms().dsiMusic == 2 ? ((60 * 5)+10) : (60 * 3))) {
 			mmEffectEx(&mus_menu);
 			waitBeforeMusicPlay = false;
 		} else {
 			waitBeforeMusicPlayTime++;
 		}
-	} else {
-		waitBeforeMusicPlay = false;
 	}
 
 	if (music && !waitBeforeMusicPlay) {
 		musicTime++;
-		if (musicTime == 60 * 49) { // Length of music file in seconds (60*ss)
+		if (musicTime == (ms().dsiMusic == 2 ? ((60 * 60)+37) : (60 * 49))) { // Length of music file in seconds (60*ss)
 			mmEffectEx(&mus_menu);
 			musicTime = 0;
 		}
@@ -1190,6 +1192,13 @@ void vBlankHandler() {
 	colonTimer++;
 
 	if (showProgressIcon) {
+		/*loadingSoundTimer++;
+
+		if (loadingSoundTimer >= 60) {
+			loadingSoundTimer = 0;
+			mmEffectEx(&snd_loading);
+		}*/
+
 		progressAnimDelay++;
 		if (progressAnimDelay == 3) {
 			progressAnimNum++;
