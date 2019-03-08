@@ -16,10 +16,10 @@
 #include "common/lzss.h"
 #include "common/tonccpy.h"
 #include "errorScreen.h"
+#include "sprite.h"
 #include "tool/stringtool.h"
 #include "uvcoord_date_time_font.h"
 #include "uvcoord_top_font.h"
-#include "sprite.h"
 // #include <nds/arm9/decompress.h>
 // extern u16 bmpImageBuffer[256*192];
 extern s16 usernameRendered[11];
@@ -29,7 +29,6 @@ static u16 _bgMainBuffer[256 * 192] = {0};
 static u16 _bgSubBuffer[256 * 192] = {0};
 static u16 _bgTextBuffer[256 * 192] = {0};
 static Sprite _oamTextSprites[12] = {0};
-
 
 ThemeTextures::ThemeTextures()
     : previouslyDrawnBottomBg(-1), bubbleTexID(0), bipsTexID(0), scrollwindowTexID(0), buttonarrowTexID(0),
@@ -942,6 +941,19 @@ void ThemeTextures::videoSetup() {
 	videoSetMode(MODE_5_3D | DISPLAY_BG3_ACTIVE);
 	videoSetModeSub(MODE_3_2D | DISPLAY_BG3_ACTIVE);
 
+	// Set up enough texture memory for our textures
+	// Bank A is just 128kb and we are using 194 kb of
+	// sprites
+	vramSetBankA(VRAM_A_TEXTURE_SLOT0);
+	vramSetBankB(VRAM_B_MAIN_SPRITE_0x06400000);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
+	vramSetBankE(VRAM_E_TEX_PALETTE);
+	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
+	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5);
+	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
+	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
+
 	// Initialize gl2d
 	glScreen2D();
 	// Make gl2d render on transparent stage.
@@ -950,19 +962,6 @@ void ThemeTextures::videoSetup() {
 
 	// Clear the GL texture state
 	glResetTextures();
-
-	// Set up enough texture memory for our textures
-	// Bank A is just 128kb and we are using 194 kb of
-	// sprites
-	vramSetBankA(VRAM_A_TEXTURE);
-	vramSetBankB(VRAM_B_MAIN_SPRITE_0x06400000);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	vramSetBankD(VRAM_D_MAIN_BG_0x06000000);
-	vramSetBankE(VRAM_E_TEX_PALETTE);
-	vramSetBankF(VRAM_F_TEX_PALETTE_SLOT4);
-	vramSetBankG(VRAM_G_TEX_PALETTE_SLOT5); // 16Kb of palette ram, and font textures take up 8*16 bytes.
-	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
 
 	//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything...
 	lcdMainOnBottom();
@@ -1007,32 +1006,28 @@ void ThemeTextures::oamSetup() {
 			_oamTextSprites[index].setPosition(x * 64, y * 64);
 			_oamTextSprites[index].show();
 		}
-	}	
-	toncset16(_bgTextBuffer, 0, BG_BUFFER_PIXELCOUNT);
+	}
+	memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
 	oamEnable(&oamMain);
-	oamUpdate(&oamMain);
 }
 
 #define SCREEN_PITCH (SCREEN_WIDTH + (SCREEN_WIDTH & 1))
 
-
-void ThemeTextures::blitTextToOAM(){
+void ThemeTextures::blitTextToOAM() {
 	for (size_t y = 0; y < 3; ++y) {
 		for (size_t x = 0; x < 4; ++x) {
 			size_t index = y * 4 + x;
 
 			for (size_t k = 0; k < 64; ++k) {
 				for (size_t l = 0; l < 64; ++l) {
-					((u16 *)_oamTextSprites[index].buffer())[k * 64 + l] = 
-					     _bgTextBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
+					((u16 *)_oamTextSprites[index].buffer())[k * 64 + l] =
+					    _bgTextBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
 				}
 			}
 		}
 	}
-	toncset16(_bgTextBuffer, 0, BG_BUFFER_PIXELCOUNT);
 	oamUpdate(&oamMain);
+	memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
 }
 
-u16 *ThemeTextures::bottomTextSurface() {
-	return _bgTextBuffer;
-}
+u16 *ThemeTextures::bottomTextSurface() { return _bgTextBuffer; }

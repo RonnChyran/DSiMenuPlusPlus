@@ -22,6 +22,7 @@
 #include "TextPane.h"
 #include "BitmapFont.h"
 
+void fontInit();
 void updateText(bool top);
 void clearText(bool top);
 void clearText();

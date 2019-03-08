@@ -399,6 +399,7 @@ void playRotatingCubesVideo(void) {
 void vBlankHandler() {
 	execQueue();		   // Execute any actions queued during last vblank.
 	execDeferredIconUpdates(); // Update any icons queued during last vblank.
+	tex().blitTextToOAM();
 
 	if (ms().theme == 0 && ms().dsiMusic != 2) waitBeforeMusicPlay = false;
 
@@ -1266,7 +1267,6 @@ void vBlankHandler() {
 	if (applaunchprep && ms().theme == 0)
 		launchDotDoFrameChange = !launchDotDoFrameChange;
 	bottomBgRefresh(); // Refresh the background image on vblank
-	tex().blitTextToOAM();
 }
 
 void loadPhotoList() {
@@ -1586,9 +1586,12 @@ void graphicsInit() {
 
 	*(u16 *)(0x0400006C) |= BIT(14);
 	*(u16 *)(0x0400006C) &= BIT(15);
-	SetBrightness(0, 31);
-	SetBrightness(1, 31);
+	// SetBrightness(0, 31);
+	// SetBrightness(, 31);
 
+	SetBrightness(0, 0);
+	SetBrightness(1, 0);
+	
 	// videoSetup() Called here before.
 	// REG_BLDCNT = BLEND_SRC_BG3 | BLEND_FADE_BLACK;
 
@@ -1630,5 +1633,7 @@ void graphicsInit() {
 	tex().drawBatteryImageCached();
 	irqSet(IRQ_VBLANK, vBlankHandler);
 	irqEnable(IRQ_VBLANK);
+	tex().oamSetup();
+
 	// consoleDemoInit();
 }

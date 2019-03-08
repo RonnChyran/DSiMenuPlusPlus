@@ -561,19 +561,19 @@ int main(int argc, char **argv) {
 	tfn(); //
 	tc().loadConfig();
 	tex().videoSetup(); // allocate texture pointers
-	tex().oamSetup();
-
-
+	
 	if (ms().theme == 1) {
 		tex().load3DSTheme();
 	} else {
 		tex().loadDSiTheme();
 	}
+	fontInit();
 
 	tonccpy(usernameRendered, PersonalData->name, sizeof(s16) * 10);
 
 	if (!sys().fatInitOk()) {
 		graphicsInit();
+		fontInit();
 		whiteScreen = false;
 		fadeType = true;
 		for (int i = 0; i < 5; i++)

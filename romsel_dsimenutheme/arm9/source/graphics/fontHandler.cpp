@@ -48,12 +48,17 @@ using std::unique_ptr;
 list<TextEntry> topText, bottomText;
 list<TextPane> panes;
 
-Font largeFont(large_fontBitmap, large_fontPal, large_utf16_lookup_table, large_font_texcoords, 
+Font *largeFont;
+Font *smallFont;
+
+
+void fontInit() 
+{
+	largeFont = new Font(large_fontBitmap, large_fontPal, large_utf16_lookup_table, large_font_texcoords, 
 		LARGE_FONT_NUM_IMAGES, LARGE_FONT_BITMAP_WIDTH);
-
-
-Font smallFont(small_fontBitmap, small_fontPal, small_utf16_lookup_table, small_font_texcoords, 
+	smallFont = new Font(small_fontBitmap, small_fontPal, small_utf16_lookup_table, small_font_texcoords, 
 		SMALL_FONT_NUM_IMAGES, SMALL_FONT_BITMAP_WIDTH);
+}
 
 TextPane &createTextPane(int startX, int startY, int shownElements)
 {
@@ -70,7 +75,7 @@ static list<TextEntry> &getTextQueue(bool top)
 
 Font &getFont(bool large)
 {
-	return large ? largeFont : smallFont;
+	return large ? *largeFont : *smallFont;
 }
 
 void updateText(bool top)
@@ -129,7 +134,7 @@ void printSmall(bool top, int x, int y, const char *message)
 
 void printSmallCentered(bool top, int y, const char *message)
 {
-	getTextQueue(top).emplace_back(false, smallFont.getCenteredX(message), y, message);
+	getTextQueue(top).emplace_back(false, smallFont->getCenteredX(message), y, message);
 }
 
 void printLarge(bool top, int x, int y, const char *message)
@@ -139,17 +144,17 @@ void printLarge(bool top, int x, int y, const char *message)
 
 void printLargeCentered(bool top, int y, const char *message)
 {
-	getTextQueue(top).emplace_back(true, largeFont.getCenteredX(message), y, message);
+	getTextQueue(top).emplace_back(true, largeFont->getCenteredX(message), y, message);
 }
 
 int calcSmallFontWidth(const char *text)
 {
-	return smallFont.calcWidth(text);
+	return smallFont->calcWidth(text);
 }
 
 int calcLargeFontWidth(const char *text)
 {
-	return largeFont.calcWidth(text);
+	return largeFont->calcWidth(text);
 }
 
 TextEntry *getPreviousTextEntry(bool top)
