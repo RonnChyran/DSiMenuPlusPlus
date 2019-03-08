@@ -25,7 +25,8 @@
 #include "TextPane.h"
 #include "fontHandler.h"
 #include "FontGraphic.h"
-
+#include "ThemeTextures.h"
+#include "BitmapFont.h"
 using namespace std;
 
 void TextPane::wrapTransition()
@@ -168,8 +169,8 @@ bool TextPane::update(bool top)
 		int alpha = it->calcAlpha();
 		if (alpha > 0)
 		{
-			glPolyFmt(POLY_ALPHA(alpha) | POLY_CULL_NONE | POLY_ID(it->polyID));
-			getFont(it->large).print(it->x / TextEntry::PRECISION, it->y / TextEntry::PRECISION, it->message);
+			// glPolyFmt(POLY_ALPHA(alpha) | POLY_CULL_NONE | POLY_ID(it->polyID));
+			getFont(it->large).print(it->x / TextEntry::PRECISION, it->y / TextEntry::PRECISION, it->message, tex().bottomTextSurface());
 		}
 	}
 	return shownText.size() == 0;

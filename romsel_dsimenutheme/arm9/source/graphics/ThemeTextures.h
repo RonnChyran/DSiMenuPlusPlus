@@ -45,6 +45,8 @@ public:
   static void commitBgMainModify();  
   static void commitBgMainModifyAsync();
 
+  static unsigned short *bottomTextSurface();
+
   void drawTopBg();
   void drawTopBgAvoidingShoulders();
 

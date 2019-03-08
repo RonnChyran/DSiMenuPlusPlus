@@ -1007,7 +1007,8 @@ void ThemeTextures::oamSetup() {
 			_oamTextSprites[index].setPosition(x * 64, y * 64);
 			_oamTextSprites[index].show();
 		}
-	}
+	}	
+	memset(_bgTextBuffer, 0xFFFF, sizeof(_bgTextBuffer));
 	oamEnable(&oamMain);
 	oamUpdate(&oamMain);
 }
@@ -1016,7 +1017,6 @@ void ThemeTextures::oamSetup() {
 
 
 void ThemeTextures::blitTextToOAM(){
-	// memset(_bgTextBuffer + 512, 0xff, sizeof(_bgTextBuffer) - 512);
 	for (size_t y = 0; y < 3; ++y) {
 		for (size_t x = 0; x < 4; ++x) {
 			size_t index = y * 4 + x;
@@ -1032,4 +1032,8 @@ void ThemeTextures::blitTextToOAM(){
 	oamUpdate(&oamMain);
 	
 
+}
+
+u16 *ThemeTextures::bottomTextSurface() {
+	return _bgTextBuffer;
 }

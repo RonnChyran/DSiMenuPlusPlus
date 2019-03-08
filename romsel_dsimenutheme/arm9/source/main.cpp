@@ -573,9 +573,9 @@ int main(int argc, char **argv) {
 
 	tonccpy(usernameRendered, PersonalData->name, sizeof(s16) * 10);
 
-	if (!sys().fatInitOk()) {
+	if (sys().fatInitOk()) {
 		graphicsInit();
-		fontInit();
+		// fontInit();
 		whiteScreen = false;
 		fadeType = true;
 		for (int i = 0; i < 5; i++)
@@ -589,7 +589,7 @@ int main(int argc, char **argv) {
 				swiWaitForVBlank();
 		}
 		currentBg = 1;
-		printLargeCentered(false, 32, "fatInitDefault failed!");
+		printLarge(false, 0, 32, " hello! \" #");
 
 		// Control the DSi Menu, but can't launch anything.
 		int pressed = 0;

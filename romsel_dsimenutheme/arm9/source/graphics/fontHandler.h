@@ -17,12 +17,11 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ------------------------------------------------------------------*/
-
+#pragma once
 #include "TextEntry.h"
 #include "TextPane.h"
 #include "FontGraphic.h"
-
-#pragma once
+#include "BitmapFont.h"
 
 void fontInit();
 void updateText(bool top);
@@ -38,7 +37,7 @@ void animateTextIn(bool top);
 void scrollTextVert(bool top, bool up, TextEntry &newEntry);
 TextEntry *getPreviousTextEntry(bool top);
 TextPane &createTextPane(int startX, int startY, int shownElements);
-FontGraphic &getFont(bool large);
+Font &getFont(bool large);
 void waitForPanesToClear();
 void reloadFontPalettes();
 void reloadFontTextures();
