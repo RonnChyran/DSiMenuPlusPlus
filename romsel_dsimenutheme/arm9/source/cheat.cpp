@@ -266,6 +266,8 @@ void CheatCodelist::selectCheats(std::string filename)
 		drawCurrentTime();
 		drawCurrentDate();
 		drawClockColon();
+    	tex().blitTextToScreen();
+
         swiWaitForVBlank();
         if(pressed & KEY_B) {
           break;
@@ -327,6 +329,8 @@ void CheatCodelist::selectCheats(std::string filename)
 		drawCurrentTime();
 		drawCurrentDate();
 		drawClockColon();
+    	tex().blitTextToScreen();
+
 		swiWaitForVBlank();
 	} while (!pressed);
     if(pressed & KEY_UP) {
@@ -448,6 +452,8 @@ void CheatCodelist::selectCheats(std::string filename)
 			drawCurrentTime();
 			drawCurrentDate();
 			drawClockColon();
+      	tex().blitTextToScreen();
+
           swiWaitForVBlank();
           if(pressed & KEY_B) {
             break;

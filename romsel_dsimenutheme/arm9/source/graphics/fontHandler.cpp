@@ -25,7 +25,7 @@
 #include "fontHandler.h"
 #include "TextEntry.h"
 #include <nds.h>
-
+#include "common/tonccpy.h"
 // GRIT auto-genrated arrays of images
 #include "small_font.h"
 #include "large_font.h"
@@ -164,5 +164,5 @@ TextEntry *getPreviousTextEntry(bool top)
 void waitForPanesToClear()
 {
 	while (panes.size() > 0)
-		swiWaitForVBlank();
+		swiWaitForVBlank();	
 }

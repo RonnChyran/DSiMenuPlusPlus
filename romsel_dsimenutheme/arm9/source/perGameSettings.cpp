@@ -419,6 +419,8 @@ void perGameSettings (std::string filename) {
 			drawCurrentTime();
 			drawCurrentDate();
 			drawClockColon();
+				tex().blitTextToScreen();
+
 			swiWaitForVBlank();
 		} while (!pressed);
 

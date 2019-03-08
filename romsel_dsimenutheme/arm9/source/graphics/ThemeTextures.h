@@ -66,7 +66,7 @@ public:
 
   void clearTopScreen();
   void oamSetup();
-  void blitTextToOAM();
+  void blitTextToScreen();
   static void videoSetup();
 private:
   void applyGrayscaleToAllGrfTextures();

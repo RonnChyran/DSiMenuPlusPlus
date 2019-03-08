@@ -452,6 +452,8 @@ void getDirectoryContents(vector<DirEntry> &dirContents, const vector<string> ex
 			drawCurrentTime();
 			drawCurrentDate();
 			drawClockColon();
+				tex().blitTextToScreen();
+
 		}
 		sort(dirContents.begin(), dirContents.end(), dirEntryPredicate);
 
@@ -524,6 +526,8 @@ void waitForFadeOut(void) {
 			drawCurrentTime();
 			drawCurrentDate();
 			drawClockColon();
+				tex().blitTextToScreen();
+
 			swiWaitForVBlank();
 		}
 	} else {
@@ -534,6 +538,8 @@ void waitForFadeOut(void) {
 			drawCurrentTime();
 			drawCurrentDate();
 			drawClockColon();
+				tex().blitTextToScreen();
+
 			swiWaitForVBlank();
 			swiWaitForVBlank();
 		}
@@ -560,6 +566,7 @@ void displayNowLoading(void) {
 		;
 	showProgressIcon = true;
 	controlTopBright = false;
+	tex().blitTextToScreen();
 }
 
 void updateScrollingState(u32 held, u32 pressed) {
@@ -761,6 +768,8 @@ void launchGba(void) {
 			drawCurrentDate();
 			drawCurrentTime();
 			drawClockColon();
+				tex().blitTextToScreen();
+
 			swiWaitForVBlank();
 		} while (!(pressed & KEY_A));
 		clearText();
@@ -835,6 +844,8 @@ void mdRomTooBig(void) {
 		drawCurrentTime();
 		drawCurrentDate();
 		drawClockColon();
+			tex().blitTextToScreen();
+
 		swiWaitForVBlank();
 
 		// Debug code for changing brightness of BG layer
@@ -990,6 +1001,8 @@ bool selectMenu(void) {
 		drawCurrentTime();
 		drawCurrentDate();
 		drawClockColon();
+			tex().blitTextToScreen();
+
 		swiWaitForVBlank();
 		if (pressed & KEY_UP) {
 			selCursorPosition--;
@@ -1196,6 +1209,8 @@ void getFileInfo(SwitchState scrn, vector<vector<DirEntry>> dirContents, bool re
 			drawCurrentTime();
 			drawCurrentDate();
 			drawClockColon();
+				tex().blitTextToScreen();
+
 		}
 	}
 	if (nowLoadingDisplaying) {
@@ -1342,6 +1357,8 @@ string browseForFile(const vector<string> extensionList) {
 				drawCurrentTime();
 				drawCurrentDate();
 				drawClockColon();
+					tex().blitTextToScreen();
+
 				swiWaitForVBlank();
 				/*if (REG_SCFG_MC != current_SCFG_MC) {
 					break;
@@ -1445,6 +1462,8 @@ string browseForFile(const vector<string> extensionList) {
 					drawCurrentTime();
 					drawCurrentDate();
 					drawClockColon();
+						tex().blitTextToScreen();
+
 					swiWaitForVBlank();
 
 					// RocketVideo video extraction
@@ -1763,6 +1782,8 @@ string browseForFile(const vector<string> extensionList) {
 					drawCurrentTime();
 					drawCurrentDate();
 					drawClockColon();
+						tex().blitTextToScreen();
+
 				}
 				scrollWindowTouched = false;
 				titleboxXpos[ms().secondaryDevice] = CURPOS * 64;
@@ -2062,6 +2083,8 @@ string browseForFile(const vector<string> extensionList) {
 					drawCurrentTime();
 					drawCurrentDate();
 					drawClockColon();
+						tex().blitTextToScreen();
+
 					swiWaitForVBlank();
 					swiWaitForVBlank();
 				}
@@ -2147,6 +2170,8 @@ string browseForFile(const vector<string> extensionList) {
 						drawCurrentTime();
 						drawCurrentDate();
 						drawClockColon();
+							tex().blitTextToScreen();
+
 						swiWaitForVBlank();
 					} while (!(pressed & KEY_A));
 					clearText();
@@ -2198,6 +2223,8 @@ string browseForFile(const vector<string> extensionList) {
 							drawCurrentTime();
 							drawCurrentDate();
 							drawClockColon();
+								tex().blitTextToScreen();
+
 							swiWaitForVBlank();
 							if (pressed & KEY_A) {
 								pressed = 0;
@@ -2505,6 +2532,8 @@ string browseForFile(const vector<string> extensionList) {
 						drawCurrentTime();
 						drawCurrentDate();
 						drawClockColon();
+							tex().blitTextToScreen();
+
 						swiWaitForVBlank();
 					} while (!pressed);
 

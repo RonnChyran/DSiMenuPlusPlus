@@ -982,6 +982,8 @@ void ThemeTextures::videoSetup() {
 	//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE); // Not sure this does anything...
 	lcdMainOnBottom();
 
+	REG_BG0CNT = BG_PRIORITY(1);
+
 	REG_BG3CNT = BG_MAP_BASE(0) | BG_BMP16_256x256 | BG_PRIORITY(0);
 	REG_BG3X = 0;
 	REG_BG3Y = 0;
@@ -1028,23 +1030,8 @@ void ThemeTextures::oamSetup() {
 	// oamUpdate(&oamMain);
 }
 
-void ThemeTextures::blitTextToOAM() {
+void ThemeTextures::blitTextToScreen() {
 	dmaCopyWordsAsynch(0, _bgTextBuffer, BG_GFX, 0x18000);
-	toncset16(_bgTextBuffer, 0,  0x18000 >> 1);
-	// for (size_t y = 0; y < 3; ++y) {
-	// 	for (size_t x = 0; x < 4; ++x) {
-	// 		size_t index = y * 4 + x;
-
-	// 		for (size_t k = 0; k < 64; ++k) {
-	// 			for (size_t l = 0; l < 64; ++l) {
-	// 				((u16 *)_oamMainSprites[index].buffer())[k * 64 + l] =
-	// 				    _bgTextBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// oamUpdate(&oamMain);
-	// memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
 }
 
 u16 *ThemeTextures::bottomTextSurface() { return _bgTextBuffer; }

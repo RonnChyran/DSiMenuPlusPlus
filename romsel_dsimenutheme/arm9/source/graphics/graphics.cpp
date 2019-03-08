@@ -23,7 +23,7 @@
 #include <dirent.h>
 #include <maxmod9.h>
 #include <nds.h>
-
+#include "common/tonccpy.h"
 // This is use for the top font.
 #include "../include/startborderpal.h"
 
@@ -399,6 +399,7 @@ void playRotatingCubesVideo(void) {
 void vBlankHandler() {
 	execQueue();		   // Execute any actions queued during last vblank.
 	execDeferredIconUpdates(); // Update any icons queued during last vblank.
+	toncset16(tex().bottomTextSurface(), 0,  0x18000 >> 1);
 
 	if (ms().theme == 0 && ms().dsiMusic != 2) waitBeforeMusicPlay = false;
 
@@ -1266,7 +1267,7 @@ void vBlankHandler() {
 	if (applaunchprep && ms().theme == 0)
 		launchDotDoFrameChange = !launchDotDoFrameChange;
 	bottomBgRefresh(); // Refresh the background image on vblank
-	tex().blitTextToOAM();
+	tex().blitTextToScreen();
 }
 
 void loadPhotoList() {
@@ -1618,7 +1619,6 @@ void graphicsInit() {
 	drawClockColon();
 
 
-	bottomBgLoad(false, true);
 	// consoleDemoInit();
 
 	// printf("drawn bgload");
@@ -1633,6 +1633,7 @@ void graphicsInit() {
 	tex().drawBatteryImageCached();
 	irqEnable(IRQ_VBLANK);
 	tex().oamSetup();
+	bottomBgLoad(false, true);
 	irqSet(IRQ_VBLANK, vBlankHandler);
 
 	// consoleDemoInit();
