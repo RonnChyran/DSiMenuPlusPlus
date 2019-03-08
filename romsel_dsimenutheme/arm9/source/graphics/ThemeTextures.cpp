@@ -20,6 +20,9 @@
 #include "tool/stringtool.h"
 #include "uvcoord_date_time_font.h"
 #include "uvcoord_top_font.h"
+
+#define SCREEN_PITCH (SCREEN_WIDTH + (SCREEN_WIDTH & 1))
+
 // #include <nds/arm9/decompress.h>
 // extern u16 bmpImageBuffer[256*192];
 extern s16 usernameRendered[11];
@@ -28,7 +31,7 @@ static u16 _bmpImageBuffer[256 * 192] = {0};
 static u16 _bgMainBuffer[256 * 192] = {0};
 static u16 _bgSubBuffer[256 * 192] = {0};
 static u16 _bgTextBuffer[256 * 192] = {0};
-static Sprite _oamTextSprites[12] = {0};
+static Sprite _oamMainSprites[12] = {0};
 
 ThemeTextures::ThemeTextures()
     : previouslyDrawnBottomBg(-1), bubbleTexID(0), bipsTexID(0), scrollwindowTexID(0), buttonarrowTexID(0),
@@ -395,18 +398,31 @@ void ThemeTextures::commitBgSubModifyAsync() {
 }
 
 u16 *ThemeTextures::beginBgMainModify() {
-	dmaCopyWords(0, BG_GFX, _bgMainBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	// dmaCopyWords(0, BG_GFX, _bgMainBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
 	return _bgMainBuffer;
 }
 
 void ThemeTextures::commitBgMainModify() {
 	DC_FlushRange(_bgMainBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
-	dmaCopyWords(2, _bgMainBuffer, BG_GFX, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	// dmaCopyWords(2, _bgMainBuffer, BG_GFX, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	for (size_t y = 0; y < 3; ++y) {
+		for (size_t x = 0; x < 4; ++x) {
+			size_t index = y * 4 + x;
+
+			for (size_t k = 0; k < 64; ++k) {
+				for (size_t l = 0; l < 64; ++l) {
+					((u16 *)_oamMainSprites[index].buffer())[k * 64 + l] =
+					    _bgMainBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
+				}
+			}
+		}
+	}
+	oamUpdate(&oamMain);
 }
 
 void ThemeTextures::commitBgMainModifyAsync() {
-	DC_FlushRange(_bgMainBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
-	dmaCopyWordsAsynch(2, _bgMainBuffer, BG_GFX, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	// DC_FlushRange(_bgMainBuffer, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
+	// dmaCopyWordsAsynch(2, _bgMainBuffer, BG_GFX, sizeof(u16) * BG_BUFFER_PIXELCOUNT);
 }
 
 void ThemeTextures::drawTopBg() {
@@ -999,36 +1015,36 @@ void ThemeTextures::oamSetup() {
 		for (size_t x = 0; x < 4; ++x) {
 			size_t index = y * 4 + x;
 
-			_oamTextSprites[index].init(index);
-			_oamTextSprites[index].setSize(SS_SIZE_64);
-			_oamTextSprites[index].setPriority(0);
-			_oamTextSprites[index].setBufferOffset(32 + index * 64);
-			_oamTextSprites[index].setPosition(x * 64, y * 64);
-			_oamTextSprites[index].show();
+			_oamMainSprites[index].init(index);
+			_oamMainSprites[index].setSize(SS_SIZE_64);
+			_oamMainSprites[index].setPriority(3);
+			_oamMainSprites[index].setBufferOffset(32 + index * 64);
+			_oamMainSprites[index].setPosition(x * 64, y * 64);
+			_oamMainSprites[index].show();
 		}
 	}
-	memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
+	// memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
 	oamEnable(&oamMain);
-	oamUpdate(&oamMain);
+	// oamUpdate(&oamMain);
 }
 
-#define SCREEN_PITCH (SCREEN_WIDTH + (SCREEN_WIDTH & 1))
-
 void ThemeTextures::blitTextToOAM() {
-	for (size_t y = 0; y < 3; ++y) {
-		for (size_t x = 0; x < 4; ++x) {
-			size_t index = y * 4 + x;
+	dmaCopyWordsAsynch(0, _bgTextBuffer, BG_GFX, 0x18000);
+	toncset16(_bgTextBuffer, 0,  0x18000 >> 1);
+	// for (size_t y = 0; y < 3; ++y) {
+	// 	for (size_t x = 0; x < 4; ++x) {
+	// 		size_t index = y * 4 + x;
 
-			for (size_t k = 0; k < 64; ++k) {
-				for (size_t l = 0; l < 64; ++l) {
-					((u16 *)_oamTextSprites[index].buffer())[k * 64 + l] =
-					    _bgTextBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
-				}
-			}
-		}
-	}
-	oamUpdate(&oamMain);
-	memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
+	// 		for (size_t k = 0; k < 64; ++k) {
+	// 			for (size_t l = 0; l < 64; ++l) {
+	// 				((u16 *)_oamMainSprites[index].buffer())[k * 64 + l] =
+	// 				    _bgTextBuffer[(k + y * 64) * SCREEN_PITCH + (l + x * 64)];
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// oamUpdate(&oamMain);
+	// memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
 }
 
 u16 *ThemeTextures::bottomTextSurface() { return _bgTextBuffer; }
