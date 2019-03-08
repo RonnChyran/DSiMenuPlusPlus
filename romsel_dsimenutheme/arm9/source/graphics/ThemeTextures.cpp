@@ -1029,6 +1029,7 @@ void ThemeTextures::blitTextToOAM(){
 			}
 		}
 	}
+	memset(_bgTextBuffer, 0xFFFF, sizeof(_bgTextBuffer));
 	oamUpdate(&oamMain);
 	
 

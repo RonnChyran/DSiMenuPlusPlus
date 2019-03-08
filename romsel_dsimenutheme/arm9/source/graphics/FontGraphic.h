@@ -39,9 +39,10 @@ public:
 			const unsigned short int *_mapping
 			);
 	void print(int x, int y, const char *text);
-	int calcWidth(const char *text);
 	void print(int x, int y, int value);
 	int getCenteredX(const char *text);
+		int calcWidth(const char *text);
+
 	void printCentered(int y, const char *text);
 	void printCentered(int y, int value);
 };

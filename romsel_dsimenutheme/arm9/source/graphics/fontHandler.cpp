@@ -46,20 +46,20 @@ using namespace std;
 
 using std::unique_ptr;
 
-FontGraphic smallFont;
-FontGraphic largeFont;
+// FontGraphic smallFont;
+// FontGraphic largeFont;
 
-glImage smallFontImages[SMALL_FONT_NUM_IMAGES];
-glImage largeFontImages[LARGE_FONT_NUM_IMAGES];
+// glImage smallFontImages[SMALL_FONT_NUM_IMAGES];
+// glImage largeFontImages[LARGE_FONT_NUM_IMAGES];
 
 list<TextEntry> topText, bottomText;
 list<TextPane> panes;
 
-Font _largeFont(large_fontBitmap, large_fontPal, large_utf16_lookup_table, large_font_texcoords, 
+Font largeFont(large_fontBitmap, large_fontPal, large_utf16_lookup_table, large_font_texcoords, 
 		LARGE_FONT_NUM_IMAGES, LARGE_FONT_BITMAP_WIDTH);
 
 
-Font _smallFont(small_fontBitmap, small_fontPal, small_utf16_lookup_table, small_font_texcoords, 
+Font smallFont(small_fontBitmap, small_fontPal, small_utf16_lookup_table, small_font_texcoords, 
 		SMALL_FONT_NUM_IMAGES, SMALL_FONT_BITMAP_WIDTH);
 /*
 unsigned int *bitmap, unsigned short *palette, unsigned short int *mapping, unsigned int *texcoords, 
@@ -132,7 +132,7 @@ static list<TextEntry> &getTextQueue(bool top)
 
 Font &getFont(bool large)
 {
-	return large ? _largeFont : _smallFont;
+	return large ? largeFont : smallFont;
 }
 
 void updateText(bool top)
