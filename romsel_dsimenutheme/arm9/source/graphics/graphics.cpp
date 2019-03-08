@@ -399,7 +399,6 @@ void playRotatingCubesVideo(void) {
 void vBlankHandler() {
 	execQueue();		   // Execute any actions queued during last vblank.
 	execDeferredIconUpdates(); // Update any icons queued during last vblank.
-	tex().blitTextToOAM();
 
 	if (ms().theme == 0 && ms().dsiMusic != 2) waitBeforeMusicPlay = false;
 
@@ -1267,6 +1266,7 @@ void vBlankHandler() {
 	if (applaunchprep && ms().theme == 0)
 		launchDotDoFrameChange = !launchDotDoFrameChange;
 	bottomBgRefresh(); // Refresh the background image on vblank
+	tex().blitTextToOAM();
 }
 
 void loadPhotoList() {

@@ -1009,6 +1009,7 @@ void ThemeTextures::oamSetup() {
 	}
 	memset(_bgTextBuffer, 0, sizeof(_bgTextBuffer));
 	oamEnable(&oamMain);
+	oamUpdate(&oamMain);
 }
 
 #define SCREEN_PITCH (SCREEN_WIDTH + (SCREEN_WIDTH & 1))
