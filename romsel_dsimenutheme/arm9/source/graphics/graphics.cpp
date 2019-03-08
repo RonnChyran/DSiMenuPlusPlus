@@ -1269,6 +1269,7 @@ void vBlankHandler() {
 	if (applaunchprep && ms().theme == 0)
 		launchDotDoFrameChange = !launchDotDoFrameChange;
 	bottomBgRefresh(); // Refresh the background image on vblank
+	tex().blitTextToOAM();
 }
 
 void loadPhotoList() {

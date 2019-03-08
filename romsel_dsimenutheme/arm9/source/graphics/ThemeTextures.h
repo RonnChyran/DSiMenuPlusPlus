@@ -63,6 +63,8 @@ public:
   void drawDateTime(const char* date, const int posX, const int posY, const int drawCount, int *hourWidthPointer);
 
   void clearTopScreen();
+  void oamSetup();
+  void blitTextToOAM();
   static void videoSetup();
 private:
   void applyGrayscaleToAllGrfTextures();
