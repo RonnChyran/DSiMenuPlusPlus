@@ -1008,7 +1008,7 @@ void ThemeTextures::oamSetup() {
 			_oamTextSprites[index].show();
 		}
 	}	
-	memset(_bgTextBuffer, 0xFFFF, sizeof(_bgTextBuffer));
+	toncset16(_bgTextBuffer, 0, BG_BUFFER_PIXELCOUNT);
 	oamEnable(&oamMain);
 	oamUpdate(&oamMain);
 }
@@ -1029,10 +1029,8 @@ void ThemeTextures::blitTextToOAM(){
 			}
 		}
 	}
-	memset(_bgTextBuffer, 0xFFFF, sizeof(_bgTextBuffer));
+	toncset16(_bgTextBuffer, 0, BG_BUFFER_PIXELCOUNT);
 	oamUpdate(&oamMain);
-	
-
 }
 
 u16 *ThemeTextures::bottomTextSurface() {

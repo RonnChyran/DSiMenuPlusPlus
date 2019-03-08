@@ -563,7 +563,6 @@ int main(int argc, char **argv) {
 	tex().videoSetup(); // allocate texture pointers
 	tex().oamSetup();
 
-	// fontInit();
 
 	if (ms().theme == 1) {
 		tex().load3DSTheme();
@@ -575,7 +574,6 @@ int main(int argc, char **argv) {
 
 	if (!sys().fatInitOk()) {
 		graphicsInit();
-		fontInit();
 		whiteScreen = false;
 		fadeType = true;
 		for (int i = 0; i < 5; i++)
@@ -737,7 +735,6 @@ int main(int argc, char **argv) {
 		printSmallCentered(false, 104, "Do not turn off the power.");
 		for (int i = 0; i < 15; i++)
 			swiWaitForVBlank();
-		reloadFontPalettes();
 		for (int i = 0; i < 20; i++)
 			swiWaitForVBlank();
 		showProgressIcon = true;

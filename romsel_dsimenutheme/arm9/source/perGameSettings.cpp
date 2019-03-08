@@ -39,7 +39,6 @@
 #include "iconTitle.h"
 #include "graphics/fontHandler.h"
 #include "graphics/graphics.h"
-#include "graphics/FontGraphic.h"
 #include "graphics/TextPane.h"
 #include "graphics/ThemeTextures.h"
 

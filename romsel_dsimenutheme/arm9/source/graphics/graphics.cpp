@@ -18,7 +18,6 @@
 
 ------------------------------------------------------------------*/
 
-#include "FontGraphic.h"
 #include "common/gl2d.h"
 #include <ctime>
 #include <dirent.h>
@@ -1175,9 +1174,7 @@ void vBlankHandler() {
 				// Reload the dialog box palettes here...
 				reloadDboxPalette();
 			} else if (!showdialogbox) {
-
 				reloadIconPalettes();
-				reloadFontPalettes();
 			}
 			vblankRefreshCounter = 0;
 		} else {

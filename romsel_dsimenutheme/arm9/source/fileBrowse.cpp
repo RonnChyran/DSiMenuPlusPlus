@@ -38,7 +38,6 @@
 
 #include "SwitchState.h"
 #include "errorScreen.h"
-#include "graphics/FontGraphic.h"
 #include "graphics/TextPane.h"
 #include "graphics/ThemeTextures.h"
 #include "graphics/fontHandler.h"
@@ -557,7 +556,6 @@ void displayNowLoading(void) {
 		}
 	}
 	nowLoadingDisplaying = true;
-	reloadFontPalettes();
 	while (!screenFadedIn())
 		;
 	showProgressIcon = true;
@@ -1253,7 +1251,6 @@ string browseForFile(const vector<string> extensionList) {
 	while (1) {
 		getFileInfo(scrn, dirContents, true);
 		reloadIconPalettes();
-		reloadFontPalettes();
 		while (!screenFadedOut())
 			;
 		nowLoadingDisplaying = false;
@@ -1378,7 +1375,7 @@ string browseForFile(const vector<string> extensionList) {
 						    dirContents[scrn].at((CURPOS - 2) + PAGENUM * 40).isDirectory,
 						    dirContents[scrn].at((CURPOS - 2) + PAGENUM * 40).name.c_str(),
 						    CURPOS - 2);
-						defer(reloadFontTextures);
+
 					}
 				}
 			} else if (((pressed & KEY_RIGHT) && !titleboxXmoveleft && !titleboxXmoveright) ||
@@ -1406,7 +1403,6 @@ string browseForFile(const vector<string> extensionList) {
 						    dirContents[scrn].at((CURPOS + 2) + PAGENUM * 40).isDirectory,
 						    dirContents[scrn].at((CURPOS + 2) + PAGENUM * 40).name.c_str(),
 						    CURPOS + 2);
-						defer(reloadFontTextures);
 					}
 				}
 				// Move apps
@@ -1475,7 +1471,7 @@ string browseForFile(const vector<string> extensionList) {
 									       .at((CURPOS - 2) + PAGENUM * 40)
 									       .name.c_str(),
 									   CURPOS - 2);
-								defer(reloadFontTextures);
+		
 							}
 						} else if (!edgeBumpSoundPlayed) {
 							mmEffectEx(&snd_wrong);
@@ -1498,7 +1494,7 @@ string browseForFile(const vector<string> extensionList) {
 									       .at((CURPOS + 2) + PAGENUM * 40)
 									       .name.c_str(),
 									   CURPOS + 2);
-								defer(reloadFontTextures);
+		
 							}
 						} else if (!edgeBumpSoundPlayed) {
 							mmEffectEx(&snd_wrong);
@@ -1541,7 +1537,7 @@ string browseForFile(const vector<string> extensionList) {
 							for (int i = 0; i < 5; i++)
 								swiWaitForVBlank();
 							reloadIconPalettes();
-							reloadFontPalettes();
+
 							clearText();
 						} else {
 							mmEffectEx(&snd_wrong);
@@ -1571,7 +1567,7 @@ string browseForFile(const vector<string> extensionList) {
 							for (int i = 0; i < 5; i++)
 								swiWaitForVBlank();
 							reloadIconPalettes();
-							reloadFontPalettes();
+
 							clearText();
 						} else {
 							mmEffectEx(&snd_wrong);

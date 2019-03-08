@@ -20,10 +20,8 @@
 #pragma once
 #include "TextEntry.h"
 #include "TextPane.h"
-#include "FontGraphic.h"
 #include "BitmapFont.h"
 
-void fontInit();
 void updateText(bool top);
 void clearText(bool top);
 void clearText();
@@ -39,5 +37,3 @@ TextEntry *getPreviousTextEntry(bool top);
 TextPane &createTextPane(int startX, int startY, int shownElements);
 Font &getFont(bool large);
 void waitForPanesToClear();
-void reloadFontPalettes();
-void reloadFontTextures();
