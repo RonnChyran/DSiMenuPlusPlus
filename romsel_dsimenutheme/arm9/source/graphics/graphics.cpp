@@ -58,6 +58,7 @@ extern bool fadeType;
 extern bool fadeSpeed;
 extern bool controlTopBright;
 extern bool controlBottomBright;
+extern bool showBubble;
 int fadeDelay = 0;
 
 extern bool music;
@@ -396,11 +397,16 @@ void playRotatingCubesVideo(void) {
 	}
 }
 
+#include "bubble.h"
+
 void vBlankHandler() {
 	execQueue();		   // Execute any actions queued during last vblank.
-	execDeferredIconUpdates(); // Update any icons queued during last vblank.
+	execDeferredIconUpdates();
 	toncset16(tex().bottomTextSurface(), 0,  0x18000 >> 1);
-
+ 	// Update any icons queued during last vblank.
+	if (showBubble && !showdialogbox) {
+		tonccpy(tex().bottomTextSurface(),  bubbleBitmap, sizeof(bubbleBitmap));
+	}
 	if (ms().theme == 0 && ms().dsiMusic != 2) waitBeforeMusicPlay = false;
 
 	if (music && waitBeforeMusicPlay) {

@@ -44,7 +44,7 @@ ThemeTextures::ThemeTextures()
 }
 
 void ThemeTextures::loadBubbleImage(const Texture &tex, int sprW, int sprH) {
-	_bubbleImage = std::move(loadTexture(&bubbleTexID, tex, 1, sprW, sprH));
+	// _bubbleImage = std::move(loadTexture(&bubbleTexID, tex, 1, sprW, sprH));
 }
 
 void ThemeTextures::loadProgressImage(const Texture &tex) {
@@ -184,25 +184,25 @@ void ThemeTextures::reloadPalDialogBox() {
 }
 
 void ThemeTextures::loadBackgrounds() {
-	// 0: Top, 1: Bottom, 2: Bottom Bubble, 3: Moving, 4: MovingLeft, 5: MovingRight
+	// 0: Top, 1: Bottom, 2: Moving, 3: MovingLeft, 4: MovingRight
 
 	// We reuse the _topBackgroundTexture as a buffer.
 	_backgroundTextures.emplace_back(TFN_BG_TOPBG, TFN_FALLBACK_BG_TOPBG);
 
 	if (ms().theme == 1 && !sys().isRegularDS()) {
 		_backgroundTextures.emplace_back(TFN_BG_BOTTOMBG, TFN_FALLBACK_BG_BOTTOMBG);
-		_backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG, TFN_FALLBACK_BG_BOTTOMBUBBLEBG);
+		// _backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG, TFN_FALLBACK_BG_BOTTOMBUBBLEBG);
 		return;
 	}
 
 	if (ms().theme == 1 && sys().isRegularDS()) {
 		_backgroundTextures.emplace_back(TFN_BG_BOTTOMBG_DS, TFN_FALLBACK_BG_BOTTOMBG_DS);
-		_backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG_DS, TFN_FALLBACK_BG_BOTTOMBUBBLEBG_DS);
+		// _backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG_DS, TFN_FALLBACK_BG_BOTTOMBUBBLEBG_DS);
 		return;
 	}
 	// DSi Theme
 	_backgroundTextures.emplace_back(TFN_BG_BOTTOMBG, TFN_FALLBACK_BG_BOTTOMBG);
-	_backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG, TFN_FALLBACK_BG_BOTTOMBUBBLEBG);
+	// _backgroundTextures.emplace_back(TFN_BG_BOTTOMBUBBLEBG, TFN_FALLBACK_BG_BOTTOMBUBBLEBG);
 	_backgroundTextures.emplace_back(TFN_BG_BOTTOMMOVINGBG, TFN_FALLBACK_BG_BOTTOMMOVINGBG);
 }
 
@@ -440,6 +440,7 @@ void ThemeTextures::drawBottomBg(int index) {
 		index = 3;
 	if (index > 2 && ms().theme == 1)
 		index = 2;
+	
 	beginBgMainModify();
 
 	if (previouslyDrawnBottomBg != index) {

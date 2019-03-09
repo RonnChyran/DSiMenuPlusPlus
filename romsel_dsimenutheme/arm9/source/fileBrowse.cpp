@@ -118,7 +118,7 @@ extern bool showLshoulder;
 extern bool showRshoulder;
 
 extern bool showProgressIcon;
-
+extern bool showBubble;
 char boxArtPath[40][256];
 
 bool boxArtLoaded = false;
@@ -707,6 +707,7 @@ void switchDevice(void) {
 		redoDropDown = true;
 		shouldersRendered = false;
 		currentBg = 0;
+		showBubble = false;
 		showSTARTborder = false;
 		stopSoundPlayed = false;
 		clearText();
@@ -1337,7 +1338,7 @@ string browseForFile(const vector<string> extensionList) {
 					updateBoxArt(dirContents, scrn);
 				}
 				if (CURPOS + PAGENUM * 40 < ((int)dirContents[scrn].size())) {
-					currentBg = 1, displayBoxArt = ms().showBoxArt;
+					showBubble = true, displayBoxArt = ms().showBoxArt;
 					titleUpdate(dirContents[scrn].at(CURPOS + PAGENUM * 40).isDirectory,
 						    dirContents[scrn].at(CURPOS + PAGENUM * 40).name.c_str(), CURPOS);
 				} else {
@@ -1346,7 +1347,7 @@ string browseForFile(const vector<string> extensionList) {
 						displayBoxArt = false;
 					}
 					clearText(false);
-					currentBg = 0;
+					showBubble = false;
 					showSTARTborder = rocketVideo_playVideo = (ms().theme == 1 ? true : false);
 				}
 				buttonArrowTouched[0] = ((keysHeld() & KEY_TOUCH) && touch.py > 171 && touch.px < 19);
@@ -1594,7 +1595,7 @@ string browseForFile(const vector<string> extensionList) {
 					}
 				}
 				if ((PAGENUM != orgPage) || (CURPOS != orgCursorPosition)) {
-					currentBg = 1;
+						showBubble = true;
 					writeBannerText(0, "Please wait...", "", "");
 
 					CIniFile gameOrderIni(gameOrderIniPath);
@@ -1767,11 +1768,12 @@ string browseForFile(const vector<string> extensionList) {
 
 					clearText();
 					if (CURPOS + PAGENUM * 40 < ((int)dirContents[scrn].size())) {
-						currentBg = 1;
+						showBubble = true;
 						titleUpdate(dirContents[scrn].at(CURPOS + PAGENUM * 40).isDirectory,
 							    dirContents[scrn].at(CURPOS + PAGENUM * 40).name.c_str(),
 							    CURPOS);
 					} else {
+						showBubble = false;
 						currentBg = 0;
 					}
 					prevPos = CURPOS;
@@ -2063,13 +2065,14 @@ string browseForFile(const vector<string> extensionList) {
 					if (prevPos != CURPOS) {
 						clearText();
 						if (CURPOS + PAGENUM * 40 < ((int)dirContents[scrn].size())) {
-							currentBg = 1;
+							showBubble = true;
 							titleUpdate(
 							    dirContents[scrn].at(CURPOS + PAGENUM * 40).isDirectory,
 							    dirContents[scrn].at(CURPOS + PAGENUM * 40).name.c_str(),
 							    CURPOS);
 						} else {
-							currentBg = 0;
+							showBubble = false;
+
 						}
 					}
 					prevTouch2 = prevTouch1;
@@ -2129,6 +2132,7 @@ string browseForFile(const vector<string> extensionList) {
 					redoDropDown = true;
 					shouldersRendered = false;
 					currentBg = 0;
+					showBubble = false;
 					showSTARTborder = false;
 					stopSoundPlayed = false;
 					clearText();
@@ -2257,6 +2261,7 @@ string browseForFile(const vector<string> extensionList) {
 
 						if (ms().theme == 0) {
 							currentBg = 0;
+							showBubble = false;
 							showSTARTborder = false;
 							clearText(false); // Clear title
 
@@ -2361,6 +2366,7 @@ string browseForFile(const vector<string> extensionList) {
 						redoDropDown = true;
 					shouldersRendered = false;
 					currentBg = 0;
+					showBubble = false;
 					showSTARTborder = false;
 					stopSoundPlayed = false;
 					clearText();
@@ -2397,6 +2403,8 @@ string browseForFile(const vector<string> extensionList) {
 						redoDropDown = true;
 					shouldersRendered = false;
 					currentBg = 0;
+										showBubble = false;
+
 					showSTARTborder = false;
 					stopSoundPlayed = false;
 					clearText();
@@ -2425,6 +2433,8 @@ string browseForFile(const vector<string> extensionList) {
 				redoDropDown = true;
 				shouldersRendered = false;
 				currentBg = 0;
+									showBubble = false;
+
 				showSTARTborder = false;
 				stopSoundPlayed = false;
 				clearText();
@@ -2551,6 +2561,8 @@ string browseForFile(const vector<string> extensionList) {
 						rocketVideo_playVideo = true;
 						shouldersRendered = false;
 						currentBg = 0;
+											showBubble = false;
+
 						showSTARTborder = false;
 						stopSoundPlayed = false;
 						clearText();
@@ -2590,6 +2602,8 @@ string browseForFile(const vector<string> extensionList) {
 						boxArtLoaded = false;
 						shouldersRendered = false;
 						currentBg = 0;
+											showBubble = false;
+
 						showSTARTborder = false;
 						stopSoundPlayed = false;
 						clearText();

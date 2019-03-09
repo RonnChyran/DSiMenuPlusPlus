@@ -70,6 +70,7 @@ bool fadeSpeed = true; // false = slow (for DSi launch effect), true = fast
 bool controlTopBright = true;
 bool controlBottomBright = true;
 
+bool showBubble = false;
 extern void ClearBrightness();
 extern bool showProgressIcon;
 
@@ -586,7 +587,7 @@ int main(int argc, char **argv) {
 			for (int i = 0; i < 25; i++)
 				swiWaitForVBlank();
 		}
-		currentBg = 1;
+		showBubble = true;
 		printLargeCentered(false, 32, "fatInitDefault failed!");
 
 		// Control the DSi Menu, but can't launch anything.
