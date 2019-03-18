@@ -92,7 +92,7 @@ jobs:
     dependsOn: 
       - latest_build
       - docker_build
-    condition: and(succeeded('latest_build'), succeeded('docker_build'), ne(variables['Build.SourceBranch'], 'refs/pull/1/merge'))
+    condition: and(succeeded('latest_build'), succeeded('docker_build'), not(startsWith(variables['Build.SourceBranch'], 'refs/pull')))
     
     steps:
       - task: DownloadBuildArtifacts@0
@@ -144,7 +144,7 @@ jobs:
   - job: send_webhook_success
     dependsOn: publish_build_twlbot
     displayName: Send Discord Success Webhook
-    condition: succeeded('publish_build_twlbot')
+    condition: and(succeeded('publish_build_twlbot'), not(startsWith(variables['Build.SourceBranch'], 'refs/pull')))
     steps: 
       - script: |
           curl -o send.sh https://raw.githubusercontent.com/DS-Homebrew/discord-webhooks/master/send-azure.sh
@@ -154,7 +154,7 @@ jobs:
   - job: send_webhook_failure
     dependsOn: publish_build_twlbot
     displayName: Send Discord Failure Webhook
-    condition: or(failed('publish_build_twlbot'), failed('latest_build'), failed('docker_build'))
+    condition: and(or(failed('publish_build_twlbot'), failed('latest_build'), failed('docker_build')), not(startsWith(variables['Build.SourceBranch'], 'refs/pull')))
     steps: 
       - script: |
           curl -o send.sh https://raw.githubusercontent.com/DS-Homebrew/discord-webhooks/master/send-azure.sh
