@@ -53,6 +53,7 @@
 #include "sr_data_srllastran.h"
 
 #include <nds/arm9/dldi.h>
+#include "sound.h"
 #include <sys/iosupport.h>
 
 using namespace akui;
@@ -476,6 +477,7 @@ void MainWnd::bootArgv(DSRomInfo &rominfo)
     std::string fullPath = _mainList->getSelectedFullPath();
     std::string launchPath = fullPath;
     std::vector<const char *> cargv{};
+    snd().fadeOutStream();
     if (rominfo.isArgv())
     {
         ArgvFile argv(fullPath);
@@ -496,6 +498,7 @@ void MainWnd::bootArgv(DSRomInfo &rominfo)
         std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
         messageBox(this, LANG("game launch", "ROM Start Error"), errorString, MB_OK);
         progressWnd().hide();
+        snd().cancelFadeOutStream();
     }
 }
 
@@ -625,6 +628,7 @@ void bootWidescreen(const char *filename)
 
 void MainWnd::bootBootstrap(PerGameSettings &gameConfig, DSRomInfo &rominfo)
 {
+    snd().fadeOutStream();
     dbg_printf("%s", _mainList->getSelectedShowName().c_str());
     std::string fileName = _mainList->getSelectedShowName();
     std::string fullPath = _mainList->getSelectedFullPath();
@@ -763,6 +767,7 @@ void MainWnd::bootBootstrap(PerGameSettings &gameConfig, DSRomInfo &rominfo)
 				std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
 				messageBox(this, LANG("game launch", "NDS Bootstrap Error"), errorString, MB_OK);
 				progressWnd().hide();
+                snd().cancelFadeOutStream();
 			}
 		}
 	} else {
@@ -780,22 +785,26 @@ void MainWnd::bootBootstrap(PerGameSettings &gameConfig, DSRomInfo &rominfo)
 			std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
 			messageBox(this, LANG("game launch", "NDS Bootstrap Error"), errorString, MB_OK);
 			progressWnd().hide();
+            snd().cancelFadeOutStream();
 		}
 	}
 }
 
 void MainWnd::bootFlashcard(const std::string &ndsPath, const std::string &filename, bool usePerGameSettings)
 {
+    snd().fadeOutStream();
     int err = loadGameOnFlashcard(ndsPath.c_str(), filename, usePerGameSettings);
     if (err)
     {
         std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
         messageBox(this, LANG("game launch", "Flashcard Error"), errorString, MB_OK);
+        snd().cancelFadeOutStream();
     }
 }
 
 void MainWnd::bootFile(const std::string &loader, const std::string &fullPath)
 {
+    snd().fadeOutStream();
     LoaderConfig config(loader, "");
     std::vector<const char *> argv{};
     argv.emplace_back(loader.c_str());
@@ -806,6 +815,7 @@ void MainWnd::bootFile(const std::string &loader, const std::string &fullPath)
         std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
         messageBox(this, LANG("game launch", "Launch Error"), errorString, MB_OK);
         progressWnd().hide();
+        snd().cancelFadeOutStream();
     }
 }
 
@@ -867,6 +877,8 @@ void MainWnd::launchSelected()
 			messageBox(this, LANG("game launch", "ROM Start Error"), "Cannot run this on 3DS.", MB_OK);
 			return;
 		}
+
+        snd().fadeOutStream();
 
         // Unlaunch boot here....
         UnlaunchBoot unlaunch(fullPath, rominfo.saveInfo().dsiPubSavSize, rominfo.saveInfo().dsiPrvSavSize);
@@ -1100,6 +1112,7 @@ void MainWnd::showSettings(void)
     {
         std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
         messageBox(this, LANG("game launch", "NDS Bootstrap Error"), errorString, MB_OK);
+        snd().cancelFadeOutStream();
     }
 }
 
@@ -1120,6 +1133,7 @@ void MainWnd::showManual(void)
 
 void MainWnd::bootSlot1(void)
 {
+    snd().fadeOutStream();
     dbg_printf("Launch Slot1..\n");
     ms().launchType = DSiMenuPlusPlusSettings::ESlot1;
     ms().saveSettings();
@@ -1139,16 +1153,19 @@ void MainWnd::bootSlot1(void)
     {
         std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
         messageBox(this, LANG("game launch", "nds-bootstrap error"), errorString, MB_OK);
+        snd().cancelFadeOutStream();
     }
 }
 
 void MainWnd::bootGbaRunner(void)
 {
+    snd().fadeOutStream();
 	if (ms().useGbarunner) {
 	if ((access(ms().secondaryDevice ? "fat:/bios.bin" : "sd:/bios.bin", F_OK) != 0)
 	&& (access(ms().secondaryDevice ? "fat:/gba/bios.bin" : "sd:/gba/bios.bin", F_OK) != 0)
 	&& (access(ms().secondaryDevice ? "fat:/_gba/bios.bin" : "sd:/_gba/bios.bin", F_OK) != 0)) {
         messageBox(this, LANG("game launch", "GBARunner2 Error"), "BINF: bios.bin not found", MB_OK);
+        snd().cancelFadeOutStream();
 		return;
 	}
 	}
@@ -1190,6 +1207,7 @@ void MainWnd::bootGbaRunner(void)
     {
         std::string errorString = formatString(LANG("game launch", "error").c_str(), err);
         messageBox(this, LANG("game launch", "NDS Bootstrap Error"), errorString, MB_OK);
+        snd().cancelFadeOutStream();
     }
 }
 
@@ -1226,6 +1244,8 @@ void MainWnd::onFolderChanged()
     resetInputIdle();
     std::string dirShowName = _mainList->getCurrentDir();
 
+    if (dirShowName.substr(0, 1) == SD_ROOT)
+        dirShowName.replace(0, 1, "sd:/");
 
     if (!strncmp(dirShowName.c_str(), "^*::", 2))
     {

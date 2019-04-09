@@ -27,7 +27,6 @@
 
 #define SFN_SYSTEM_DIR              "/_nds/TWiLightMenu/akmenu/"
 
-
 #define SFN_FALLBACK_UI_DIRECTORY  "nitro:/themes/zelda"
 #define SFN_SYSTEM_UI_DIRECTORY    SFN_SYSTEM_DIR"themes/"
 #define SFN_UI_DIRECTORY           sfn().uiDirectory() + 
@@ -79,6 +78,9 @@
 #define SFN_LIST_BAR_BG             SFN_UI_DIRECTORY"/selection_bar_bg.bmp"
 
 #define SFN_UI_FONT                 SFN_UI_DIRECTORY"/font.pcf"
+
+#define SFN_SOUND_EFFECTBANK        SFN_UI_DIRECTORY"/sound/sfx.bin"
+#define SFN_SOUND_BG                SFN_UI_DIRECTORY"/sound/bgm.pcm.raw"
 
 #define SFN_LANGUAGE_DIRECTORY      "nitro:/language/"
 #define SFN_LANGUAGE_TEXT           SFN_LANGUAGE_DIRECTORY "%s/language.txt"

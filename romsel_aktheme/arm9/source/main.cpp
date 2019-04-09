@@ -55,6 +55,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "sr_data_srllastran.h"			 // For rebooting into the game (NTR-mode touch screen)
+#include "sr_data_srllastran_twltouch.h" // For rebooting into the game (TWL-mode touch screen)
+
+#include "sound.h"
 using namespace akui;
 
 //---------------------------------------------------------------------------------
@@ -124,7 +128,7 @@ int main(int argc, char **argv)
 	sys().initArm7RegStatuses();
 	nocashMessage("arm7 init");
 	ms().loadSettings();
-	nocashMessage("settings init");
+	snd(); // needs to be initialized very early!
 
 	// init basic system
 	sysSetBusOwners(BUS_OWNER_ARM9, BUS_OWNER_ARM9);
@@ -187,7 +191,6 @@ int main(int argc, char **argv)
 	// diskIcon().show();
 
 	batteryIcon().draw();
-
 	volumeIcon().draw();
 
 	timer().updateFps();
@@ -234,16 +237,26 @@ int main(int argc, char **argv)
 	//if (!wnd->_mainList->enterDir(SPATH_ROOT != lastDirectory ? lastDirectory : gs().startupFolder))
 	wnd->_mainList->enterDir(ms().romfolder[ms().secondaryDevice]);
 
-	irq().vblankStart();
+	snd().setStreamDelay(snd().getStartupSoundLength());
+	snd().playStartup();
+	snd().beginStream();
 
+	irq().vblankStart();
+	
 	while (1)
 	{
+		snd().updateStream(); // We need to update it three times?
 		timer().updateFps();
 		INPUT &inputs = updateInput();
 		processInput(inputs);
+		snd().updateStream(); 
 		swiWaitForVBlank();
+		snd().updateStream(); 
 		windowManager().update();
+		snd().updateStream(); 
 		gdi().present(GE_MAIN);
+		snd().updateStream();
+
 	}
 	return 0;
 }

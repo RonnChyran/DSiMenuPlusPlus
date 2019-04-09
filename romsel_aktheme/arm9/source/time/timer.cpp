@@ -39,15 +39,15 @@ void Timer::initTimer()
     _overFlow = 0;
     _fps = 0.f;
     _fpsCounter = 0;
-    irqEnable( IRQ_TIMER0 );
-    irqSet( IRQ_TIMER0, Timer::timerInterruptHandler );
-    TIMER0_DATA = 0; // set reload value
-    TIMER0_CR = TIMER_ENABLE | TIMER_DIV_1 | TIMER_IRQ_REQ;
+    irqEnable( IRQ_TIMER2 );
+    irqSet( IRQ_TIMER2, Timer::timerInterruptHandler );
+    TIMER2_DATA = 0; // set reload value
+    TIMER2_CR = TIMER_ENABLE | TIMER_DIV_1 | TIMER_IRQ_REQ;
 }
 
 double Timer::updateTimer()
 {
-    _currentTime = (_overFlow + TIMER0_DATA) * _factor;
+    _currentTime = (_overFlow + TIMER2_DATA) * _factor;
     return _currentTime;
 }
 
@@ -70,14 +70,14 @@ double Timer::getTime()
 
 vu64 Timer::getTick()
 {
-    irqDisable( IRQ_TIMER0 );
+    irqDisable( IRQ_TIMER2 );
     DC_FlushAll();
     static vu64 lastTick = 0;
-    vu64 tick = _overFlow + TIMER0_DATA;
+    vu64 tick = _overFlow + TIMER2_DATA;
     if( tick < lastTick )
         tick += 65536;
     lastTick = tick;
-    irqEnable( IRQ_TIMER0 );
+    irqEnable( IRQ_TIMER2 );
     return tick;
 }
 
