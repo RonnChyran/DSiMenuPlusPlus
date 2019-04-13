@@ -34,9 +34,6 @@ extern volatile bool fill_requested;
 extern volatile s32 samples_left_until_next_fill;
 extern volatile s32 streaming_buf_ptr;
 
-#define SAMPLES_USED (STREAMING_BUF_LENGTH - samples_left)
-#define REFILL_THRESHOLD STREAMING_BUF_LENGTH >> 2
-
 #ifdef SOUND_DEBUG
 extern char debug_buf[256];
 #endif
