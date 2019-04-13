@@ -153,12 +153,12 @@ SoundControl::SoundControl()
 
 	}
 
-	stream.sampling_rate = 16000;	 // 16000HZ
-	stream.buffer_length = 1600;	  // should be adequate
+	stream.sampling_rate = 16000;	 	// 16000HZ
+	stream.buffer_length = 800;	  		// should be adequate
 	stream.callback = on_stream_request;  
 	stream.format = MM_STREAM_16BIT_MONO; // select format
-	stream.timer = MM_TIMER1;	     // use timer0
-	stream.manual = false;	      // manual filling
+	stream.timer = MM_TIMER1;	     		// use timer1
+	stream.manual = false;	     		 // auto filling
 }
 
 mm_sfxhand SoundControl::playStartup() { return use_soundbank ? mmEffectEx(&mus_startup) : 0; }

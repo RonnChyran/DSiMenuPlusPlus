@@ -240,23 +240,19 @@ int main(int argc, char **argv)
 	snd().setStreamDelay(snd().getStartupSoundLength());
 	snd().playStartup();
 	snd().beginStream();
-
 	irq().vblankStart();
 	
 	while (1)
 	{
-		snd().updateStream(); // We need to update it three times?
 		timer().updateFps();
 		INPUT &inputs = updateInput();
 		processInput(inputs);
-		snd().updateStream(); 
 		swiWaitForVBlank();
-		snd().updateStream(); 
 		windowManager().update();
-		snd().updateStream(); 
 		gdi().present(GE_MAIN);
-		snd().updateStream();
-
+		for (int i = 0; i < TOTAL_FILLS; i++) {	
+			snd().updateStream();	
+		}
 	}
 	return 0;
 }
