@@ -50,11 +50,11 @@
 #include "common/dsimenusettings.h"
 #include "windows/rominfownd.h"
 
-#include "sr_data_srllastran.h"
-
 #include <nds/arm9/dldi.h>
 #include "sound.h"
 #include <sys/iosupport.h>
+
+#include "sr_data_srllastran.h"
 
 using namespace akui;
 
