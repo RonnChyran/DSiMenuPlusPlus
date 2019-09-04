@@ -125,13 +125,13 @@ int main(int argc, char **argv)
 	sys().initArm7RegStatuses();
 	nocashMessage("arm7 init");
 	ms().loadSettings();
-	snd(); // needs to be initialized very early!
 
 	// init basic system
 	sysSetBusOwners(BUS_OWNER_ARM9, BUS_OWNER_ARM9);
 
 
 	sfn().initFilenames();
+	snd(); // needs to be initialized very early!
 	nocashMessage("sfn init");
 	irq().init();
 
