@@ -5,7 +5,6 @@ on:
     branches: ["*"]
     paths-ignore:
       - 'README.md'
-      - '/manual/resources'
   pull_request:
     branches: ["*"]
     paths-ignore:
@@ -30,7 +29,7 @@ jobs:
           submodules: recursive
       - name: Install tools
         run: |
-          echo deb http://deb.debian.org/debian testing main contrib non-free >> /etc/apt/sources.list
+          echo deb http://deb.debian.org/debian stable main contrib non-free >> /etc/apt/sources.list
           sudo apt-get update
           sudo apt-get install chromium ffmpeg fonts-noto-cjk libxml2-utils p7zip-full python -y
       - name: Build manual pages
@@ -83,6 +82,10 @@ jobs:
           rm -rf TWiLightMenu/DSi\&3DS\ -\ SD\ card\ users
           rm -rf TWiLightMenu/3DS\ -\ CFW\ users
           rm -rf TWiLightMenu/Flashcard\ users
+          rm -rf TWiLightMenu/_nds/GBARunner2_arm7dldi_3ds.nds
+          rm -rf TWiLightMenu/_nds/GBARunner2_arm7dldi_nodsp_3ds.nds
+          rm -rf TWiLightMenu/_nds/TwiLightMenu/bootplg.srldr
+          rm -rf TWiLightMenu/_nds/TwiLightMenu/gbaswitch.srldr
           7z a TWiLightMenu-DSi.7z TWiLightMenu
           mv TWiLightMenu-DSi.7z ~/artifacts
 
@@ -95,6 +98,11 @@ jobs:
           rm -rf TWiLightMenu/DSi\&3DS\ -\ SD\ card\ users
           rm -rf TWiLightMenu/DSi\ -\ CFW\ users
           rm -rf TWiLightMenu/Flashcard\ users
+          rm -rf TWiLightMenu/_nds/GBARunner2_arm7dldi_dsi.nds
+          rm -rf TWiLightMenu/_nds/GBARunner2_arm7dldi_nodsp_dsi.nds
+          rm -rf TWiLightMenu/_nds/TWiLightMenu/unlaunch
+          rm -rf TWiLightMenu/_nds/TwiLightMenu/bootplg.srldr
+          rm -rf TWiLightMenu/_nds/TwiLightMenu/gbaswitch.srldr
           7z a TWiLightMenu-3DS.7z TWiLightMenu
           mv TWiLightMenu-3DS.7z ~/artifacts
 
