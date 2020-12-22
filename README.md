@@ -15,7 +15,7 @@
 </p>
 
 TWiLight Menu++ is an open-source DSi Menu upgrade/replacement for the Nintendo DSi, the Nintendo 3DS, and Nintendo DS flashcards.
-It can launch Nintendo DS, SNES, NES, GameBoy (color), GameBoy Advance, Sega GameGear/Master System & Mega Drive/Genesis ROMs, as well as DSTWO plugins (if you use a DSTWO) and videos.
+It can launch Nintendo DS, SNES, NES, GameBoy (Color), GameBoy Advance, Sega GameGear/Master System & Mega Drive/Genesis ROMs, as well as DSTWO plugins (if you use a DSTWO) and videos.
 
 # Compiling
 
@@ -43,9 +43,9 @@ You can help translate TWiLight Menu++ on the [Crowdin project](https://crowdin.
 - [Drenn](https://github.com/Drenn1): [GameYob](https://github.com/Drenn1/GameYob) (used to launch Gameboy ROMs)
 - [Coto](https://coto88.bitbucket.io/): Working on [SNEmulDS](https://www.gamebrew.org/wiki/SNEmulDS) with acheid/Loopy (used to launch SNES ROMs) & [nesDS](https://github.com/RocketRobz/NesDS) ([TWL Edition](https://github.com/ApacheThunder/NesDS) by [Apache Thunder](https://github.com/ApacheThunder)) (used to launch NES ROMs).
 - Lordus: [jEnesisDS](https://gamebrew.org/wiki/JEnesisDS) (used to launch Sega Mega Drive/Genesis ROMs)
-- [Gericom](https://github.com/Gericom): [GBARunner2](https://github.com/Gericom/GBARunner2) (used to launch GameBoy Advance ROMs)
+- [Gericom](https://github.com/Gericom): [GBARunner2](https://github.com/Gericom/GBARunner2) (used to launch GameBoy Advance ROMs outside of the DS Phat/lite's GBA mode)
 - [FluBBa](https://gbatemp.net/members/flubba.19963/): [S8DS](https://gbatemp.net/threads/s8ds.392855/) (used to launch Sega Master System/Game Gear ROMs)
-- Alekmaul: [StellaDS](https://github.com/DS-Homebrew/StellaDS) (used to launch Atari 2600 ROMs)
+- Alekmaul & [wavemotion](https://github.com/wavemotion-dave): [StellaDS](https://github.com/wavemotion-dave/StellaDS) and [A7800DS](https://github.com/wavemotion-dave/A7800DS) (used to launch Atari 2600/7800 ROMs)
 ## Graphics & Themes
 - [spinal_cord](https://gbatemp.net/members/spinal_cord.90607/): [DSi4DS](https://gbatemp.net/threads/dsi4ds.173617/) and [DSision2](https://gbatemp.net/threads/dsision2.92740/) graphics.
 - [StarvingArtist](https://www.deviantart.com/starvingartist/): Game Console icons.
@@ -53,9 +53,12 @@ You can help translate TWiLight Menu++ on the [Crowdin project](https://crowdin.
 - [fail0verflow](https://github.com/fail0verflow/), Fluto, and Arkhandar: Homebrew Channel/Launcher graphics.
 - davi: Border for GBC theme (originally for GameYob).
 - [NightScript](https://github.com/NightYoshi370/): Reworked Manual pages.
+## Music
+- IkaMusumeYiyaRoxie: General N64 MIDI Soundfont, used for the title splash fanfare
 ## Others
 - [profi200](https://github.com/profi200): Improved SD code from fastboot3DS.
 - [ahezard](https://github.com/ahezard): NDMA code from nds-bootstrap.
+- [Gericom](https://github.com/Gericom), TrolleyDave, and FAST6191: GBA SRAM-patching code, used in gbapatcher ([SRAM patching thread at GBATemp](https://gbatemp.net/threads/reverse-engineering-gba-patching.60168/))
 - [devkitPro](https://github.com/devkitPro): Code used in nds-hb-menu, and the use of the bootloader, devkitARM, libnds, and libfat.
 - Another World & Yellow Wood Goblin: The original akMenu/Wood UI.
 - [NightScript](https://github.com/NightYoshi370): Code cleanup, added functionality for Acekard theme in regards to flashcarts.
@@ -63,19 +66,20 @@ You can help translate TWiLight Menu++ on the [Crowdin project](https://crowdin.
 - retrogamefan & Rudolph: Included AP-patches for nds-bootstrap.
 - fintogive, RadDude McCoolguy, KazoWAR, Vague Rant, gamemasterplc, RocketRobz & ChampionLeake: Widescreen Cheats.
 ## Translators
-- Chinese Simplified: [Forbidden](https://crowdin.com/profile/Origami), [James-Makoto](https://crowdin.com/profile/VCMOD55), [R-YaTian](https://github.com/R-YaTian)
-- Chinese Traditional: [Rintim](https://crowdin.com/profile/Rintim)
-- Danish: [jonata](https://github.com/Jonatan6)
-- French: [Arcky](https://github.com/ArckyTV), [cooolgamer](https://crowdin.com/profile/cooolgamer), [Dhalian.](https://crowdin.com/profile/DHALiaN3630), [Léo](https://crowdin.com/profile/leeo97one), [LinuxCat](https://github.com/L-i-n-u-x-C-a-t), [Martinez](https://github.com/flutterbrony), [NightScript](https://github.com/NightYoshi370), [T](https://crowdin.com/profile/---T---)
+- Chinese Simplified: [Forbidden](https://crowdin.com/profile/Origami), [James-Makoto](https://crowdin.com/profile/VCMOD55), [R-YaTian](https://github.com/R-YaTian), [Yukino Song](https://crowdin.com/profile/ClassicOldSong), [百地 希留耶](https://crowdin.com/profile/FIve201)
+- Chinese Traditional: [ccccchoho](https://crowdin.com/profile/ccccchoho), [Rintim](https://crowdin.com/profile/Rintim), [奇诺比奥](https://crowdin.com/profile/Counta6_233)
+- Danish: [jonata](https://github.com/Jonatan6), [Nadia Pedersen](https://crowdin.com/profile/nadiaholmquist)
+- French: [Arcky](https://github.com/ArckyTV), [cooolgamer](https://crowdin.com/profile/cooolgamer), [Dhalian.](https://crowdin.com/profile/DHALiaN3630), [Ghost0159](https://crowdin.com/profile/Ghost0159), [Léo](https://crowdin.com/profile/leeo97one), [LinuxCat](https://github.com/L-i-n-u-x-C-a-t), [Martinez](https://github.com/flutterbrony), [NightScript](https://github.com/NightYoshi370), [T](https://crowdin.com/profile/---T---)
 - German: [ariebe9115](https://crowdin.com/profile/ariebe9115), [Christian Schuhmann](https://github.com/c-schuhmann), [Dubsenbert Reaches](https://crowdin.com/profile/Bierjunge), [İlke Hür Eyiol](https://crowdin.com/profile/ilkecan51), [Julian](https://crowdin.com/profile/nailujx86), [Kazuto](https://crowdin.com/profile/Marcmario), [malekairmaroc7](https://github.com/malekairmaroc7), [Oleh Hatsenko](https://github.com/IRONKAGE), [SkilLP](https://github.com/SkilLP), [SuperSaiyajinStackZ](https://github.com/SuperSaiyajinStackZ), [T](https://crowdin.com/profile/---T---), [Tcm0](https://github.com/Tcm0)
 - Hungarian: [Viktor Varga](http://github.com/vargaviktor)
 - Italian: [Leonardo Ledda](https://github.com/LeddaZ), [T](https://crowdin.com/profile/---T---), [xavimel](https://github.com/xavimel)
-- Japanese: [Chromaryu](https://crowdin.com/profile/knight-ryu12), [Pk11](https://github.com/Epicpkmn11), [Rintim](https://crowdin.com/profile/Rintim), [Ronny Chan](https://github.com/chyyran)
+- Japanese: [Chromaryu](https://crowdin.com/profile/knight-ryu12), [Pk11](https://github.com/Epicpkmn11), [rinrinrin2002](https://crowdin.com/profile/rinrinrin2002), [Rintim](https://crowdin.com/profile/Rintim), [Ronny Chan](https://github.com/chyyran)
 - Korean: [Myebyeol_NOTE](https://crowdin.com/profile/groovy-mint), [Oleh Hatsenko](https://github.com/IRONKAGE)
+- Norwegian: [Nullified Block](https://crowdin.com/profile/elasderas123)
 - Polish: [Mateusz Tobiasz](https://crowdin.com/profile/tobiaszmateusz)
-- Portuguese: [bruwyvn](https://crowdin.com/profile/bruwyvn), [Christopher Rodrigues](https://crowdin.com/profile/chrismr197), [Gabz Almeida](https://crowdin.com/profile/connwcted), [jim](https://crowdin.com/profile/hnrwx), [joyrv](https://crowdin.com/profile/joyrv), [Tiago Silva](https://crowdin.com/profile/TheGameratorT), [Wodson de Andrade](https://crowdin.com/profile/CaptainCheep), [Zak](https://github.com/zekroman)
+- Portuguese: [bruwyvn](https://crowdin.com/profile/bruwyvn), [Christopher Rodrigues](https://crowdin.com/profile/chrismr197), [Gabz Almeida](https://crowdin.com/profile/connwcted), [jim](https://crowdin.com/profile/hnrwx), [joyrv](https://crowdin.com/profile/joyrv), [leteka 1234](https://crowdin.com/profile/Leaqua21), [Rodrigo Tavares](https://crowdin.com/profile/rodrigodst), [Tiago Silva](https://crowdin.com/profile/TheGameratorT), [Wodson de Andrade](https://crowdin.com/profile/CaptainCheep), [Wodson de Andrade](https://crowdin.com/profile/WodsonKun), [Zak](https://github.com/zekroman)
 - Russian: [Alexey Barsukov](https://crowdin.com/profile/lps), [Ckau](https://crowdin.com/profile/Ckau), [manwithnoface](https://github.com/1upus), [mbhz](https://github.com/mbhz)
-- Spanish: [ccccmark](https://github.com/ccccmark), [KplyAsteroid](https://crowdin.com/profile/Kplyasteroid), [mschifino](https://crowdin.com/profile/mschifino), [T](https://crowdin.com/profile/---T---), [Uriki](https://github.com/Uriki), [XxPhoenix1996xX](https://github.com/XxPhoenix1996xX)
-- Swedish: [Max Hambraeus](https://github.com/maxhambraeus), [T](https://crowdin.com/profile/---T---), [Walter Lindell](https://crowdin.com/profile/walter.lindell)
-- Turkish: [İlke Hür Eyiol](https://crowdin.com/profile/ilkecan51)
+- Spanish: [Adrian Rodriguez](https://crowdin.com/profile/ar9555997), [ccccmark](https://github.com/ccccmark), [dimateos](https://crowdin.com/profile/dimateos), [KplyAsteroid](https://crowdin.com/profile/Kplyasteroid), [mschifino](https://crowdin.com/profile/mschifino), [T](https://crowdin.com/profile/---T---), [Uriki](https://github.com/Uriki), [XxPhoenix1996xX](https://github.com/XxPhoenix1996xX)
+- Swedish: [Max Hambraeus](https://github.com/maxhambraeus), [Nullified Block](https://crowdin.com/profile/elasderas123), [T](https://crowdin.com/profile/---T---), [Victor Ahlin](https://crowdin.com/profile/VSwede), [Walter Lindell](https://crowdin.com/profile/walter.lindell)
+- Turkish: [İlke Hür Eyiol](https://crowdin.com/profile/ilkecan51), [Yağmur Celep](https://crowdin.com/profile/FixingCarp)
 - Ukrainian: [Oleh Hatsenko](https://github.com/IRONKAGE), [T](https://crowdin.com/profile/---T---)

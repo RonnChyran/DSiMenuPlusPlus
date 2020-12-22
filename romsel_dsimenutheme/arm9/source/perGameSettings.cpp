@@ -66,6 +66,7 @@ int perGameSettings_boostVram = -1;
 int perGameSettings_heapShrink = -1;
 int perGameSettings_bootstrapFile = -1;
 int perGameSettings_wideScreen = -1;
+int perGameSettings_expandRomSpace = -1;
 
 std::string setAsDonorRom = "";
 
@@ -112,6 +113,7 @@ void loadPerGameSettings (std::string filename) {
 	perGameSettings_heapShrink = pergameini.GetInt("GAMESETTINGS", "HEAP_SHRINK", -1);
     perGameSettings_bootstrapFile = pergameini.GetInt("GAMESETTINGS", "BOOTSTRAP_FILE", -1);
     perGameSettings_wideScreen = pergameini.GetInt("GAMESETTINGS", "WIDESCREEN", -1);
+    perGameSettings_expandRomSpace = pergameini.GetInt("GAMESETTINGS", "EXTENDED_MEMORY", -1);
 }
 
 void savePerGameSettings (std::string filename) {
@@ -144,6 +146,9 @@ void savePerGameSettings (std::string filename) {
 		}
 		if (isDSiMode() && ms().consoleModel >= 2 && sdFound()) {
 			pergameini.SetInt("GAMESETTINGS", "WIDESCREEN", perGameSettings_wideScreen);
+		}
+		if ((isDSiMode() && ms().useBootstrap) || !ms().secondaryDevice) {
+			pergameini.SetInt("GAMESETTINGS", "EXTENDED_MEMORY", perGameSettings_expandRomSpace);
 		}
 	}
 	pergameini.SaveIniFile( pergamefilepath );
@@ -251,6 +256,7 @@ void perGameSettings (std::string filename) {
 		showdialogbox = true;
 	}
 	clearText();
+	updateText(false);
 	
 	snprintf (fileCounter, sizeof(fileCounter), "%i/%i", (CURPOS+1)+PAGENUM*40, file_count);
 	
@@ -295,14 +301,41 @@ void perGameSettings (std::string filename) {
 	}
 	u8 unitCode = 0;
 	u32 arm9dst = 0;
+	u32 arm9size = 0;
+	u32 arm7off = 0;
 	u32 arm7size = 0;
+	u32 romSize = 0;
 	fseek(f_nds_file, 0x12, SEEK_SET);
 	fread(&unitCode, sizeof(u8), 1, f_nds_file);
 	fseek(f_nds_file, 0x28, SEEK_SET);
 	fread(&arm9dst, sizeof(u32), 1, f_nds_file);
+	fseek(f_nds_file, 0x2C, SEEK_SET);
+	fread(&arm9size, sizeof(u32), 1, f_nds_file);
+	fseek(f_nds_file, 0x30, SEEK_SET);
+	fread(&arm7off, sizeof(u32), 1, f_nds_file);
 	fseek(f_nds_file, 0x3C, SEEK_SET);
 	fread(&arm7size, sizeof(u32), 1, f_nds_file);
+	fseek(f_nds_file, 0x80, SEEK_SET);
+	fread(&romSize, sizeof(u32), 1, f_nds_file);
 	fclose(f_nds_file);
+
+	if (romSize > 0) {
+		u32 overlaysSize = 0;
+		// Calculate overlay pack size
+		for (u32 i = 0x4000+arm9size; i < arm7off; i++) {
+			overlaysSize++;
+		}
+
+		romSize -= arm7off;
+		romSize -= arm7size;
+		romSize += overlaysSize;
+	}
+
+	u32 romSizeLimit = (ms().consoleModel > 0 ? 0x01800000 : 0x800000);
+	if (SDKVersion > 0x5000000) {
+		romSizeLimit = (ms().consoleModel > 0 ? 0x01000000 : 0);
+	}
+	u32 romSizeLimit2 = (ms().consoleModel > 0 ? 0x01C00000 : 0xC00000);
 
 	bool showPerGameSettings =
 		(!isDSiWare[CURPOS]
@@ -312,13 +345,13 @@ void perGameSettings (std::string filename) {
 		showPerGameSettings = false;
 	}*/
 
-	bool showCheats = ((isDSiMode() && ms().useBootstrap)
+	bool showCheats = (((isDSiMode() && ms().useBootstrap)
 	/*|| (ms().secondaryDevice && !ms().useBootstrap
 		&& ((memcmp(io_dldi_data->friendlyName, "R4(DS) - Revolution for DS", 26) == 0)
 		 || (memcmp(io_dldi_data->friendlyName, "R4TF", 4) == 0)
 		 || (memcmp(io_dldi_data->friendlyName, "R4iDSN", 6) == 0)
 		 || (memcmp(io_dldi_data->friendlyName, "Acekard AK2", 0xB) == 0)))*/
-	|| !ms().secondaryDevice);
+	|| !ms().secondaryDevice) && !isDSiWare[CURPOS]);
 
 	firstPerGameOpShown = 0;
 	perGameOps = -1;
@@ -373,6 +406,11 @@ void perGameSettings (std::string filename) {
 			if ((isDSiMode() || !ms().secondaryDevice) && arm9dst != 0x02004000 && SDKVersion >= 0x2008000 && SDKVersion < 0x5000000) {
 				perGameOps++;
 				perGameOp[perGameOps] = 5;	// Heap shrink
+			}
+			if ((isDSiMode() || !ms().secondaryDevice)
+			 && romSize > romSizeLimit && romSize <= romSizeLimit2+0x80000) {
+				perGameOps++;
+				perGameOp[perGameOps] = 10;	// Expand ROM space in RAM
 			}
 			perGameOps++;
 			perGameOp[perGameOps] = 7;	// Bootstrap
@@ -576,6 +614,18 @@ void perGameSettings (std::string filename) {
 			case 9:
 				printSmall(false, 0, perGameOpYpos, setAsDonorRom, Alignment::center);
 				break;
+			case 10:
+				printSmall(false, 24, perGameOpYpos, STR_EXPAND_ROM_SPACE + ":");
+				if (perGameSettings_expandRomSpace == -1) {
+					printSmall(false, 256-24, perGameOpYpos, STR_DEFAULT, Alignment::right);
+				} else if (perGameSettings_expandRomSpace == 2) {
+					printSmall(false, 256-24, perGameOpYpos, "Y+512KB", Alignment::right);
+				} else if (perGameSettings_expandRomSpace == 1) {
+					printSmall(false, 256-24, perGameOpYpos, STR_YES, Alignment::right);
+				} else {
+					printSmall(false, 256-24, perGameOpYpos, STR_NO, Alignment::right);
+				}
+				break;
 		}
 		perGameOpYpos += 14;
 		}
@@ -586,6 +636,7 @@ void perGameSettings (std::string filename) {
 		} else {	// Per-game settings for retail/commercial games
 			printSmall(false, 240, botRowY, showCheats ? STR_X_CHEATS_B_BACK : STR_B_BACK, Alignment::right);
 		}
+		updateText(false);
 		do {
 			scanKeys();
 			pressed = keysDown();
@@ -648,7 +699,7 @@ void perGameSettings (std::string filename) {
 						break;
 					case 2:
 						perGameSettings_dsiMode--;
-						if (perGameSettings_dsiMode < -1) perGameSettings_dsiMode = 2;
+						if (perGameSettings_dsiMode < -1) perGameSettings_dsiMode = 2-isHomebrew[CURPOS];
 						break;
 					case 3:
 						if (perGameSettings_dsiMode < 1) {
@@ -676,6 +727,15 @@ void perGameSettings (std::string filename) {
 					case 8:
 						perGameSettings_wideScreen--;
 						if (perGameSettings_wideScreen < -1) perGameSettings_wideScreen = 1;
+						break;
+					case 10:
+						perGameSettings_expandRomSpace--;
+						if (perGameSettings_expandRomSpace==1 && romSize > romSizeLimit2) {
+							perGameSettings_expandRomSpace--;
+						} else if (perGameSettings_expandRomSpace==2 && romSize <= romSizeLimit2) {
+							perGameSettings_expandRomSpace--;
+						}
+						if (perGameSettings_expandRomSpace < -1) perGameSettings_expandRomSpace = 2;
 						break;
 				}
 				(ms().theme == 4) ? snd().playLaunch() : snd().playSelect();
@@ -749,6 +809,15 @@ void perGameSettings (std::string filename) {
 						setAsDonorRom = STR_DONE;
 					  }
 						break;
+					case 10:
+						perGameSettings_expandRomSpace++;
+						if (perGameSettings_expandRomSpace==1 && romSize > romSizeLimit2) {
+							perGameSettings_expandRomSpace++;
+						} else if (perGameSettings_expandRomSpace==2 && romSize <= romSizeLimit2) {
+							perGameSettings_expandRomSpace++;
+						}
+						if (perGameSettings_expandRomSpace > 2) perGameSettings_expandRomSpace = -1;
+						break;
 				}
 				(ms().theme == 4) ? snd().playLaunch() : snd().playSelect();
 				perGameSettingsChanged = true;
@@ -786,6 +855,7 @@ void perGameSettings (std::string filename) {
 	} else {
 		clearText();
 	}
+	updateText(false);
 
 	keysSetRepeat(10, 2); // Reset key repeat
 }

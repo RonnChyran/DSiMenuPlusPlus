@@ -822,7 +822,7 @@ void arm7_main (void) {
 		}
 	}
 
-	if (isDSBrowser) {
+	if (my_isDSiMode() && isDSBrowser) {
 		fixDSBrowser();
 	}
 
@@ -836,6 +836,10 @@ void arm7_main (void) {
 	|| (*(u32*)(NDS_HEADER+0xC) & 0x00FFFFFF) == 0x5A3642)	// Rockman Zero Collection/MegaMan Zero Collection
 	{
 		gameSoftReset = true;
+	}
+
+	if (memcmp(ndsHeader->gameTitle, "TOP TF/SD DS", 12) == 0) {
+		runCardEngine = false;
 	}
 
 	if (runCardEngine) {

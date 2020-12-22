@@ -1,4 +1,5 @@
 #include <nds.h>
+#include <nds/arm9/dldi.h>
 #include <cstdio>
 #include <fat.h>
 #include <sys/stat.h>
@@ -38,6 +39,7 @@
 #define AK_SYSTEM_UI_DIRECTORY "/_nds/TWiLightMenu/akmenu/themes/"
 #define R4_SYSTEM_UI_DIRECTORY "/_nds/TWiLightMenu/r4menu/themes/"
 
+#define GBA_BORDER_DIRECTORY "/_nds/TWiLightMenu/gbaborders/"
 #define UNLAUNCH_BG_DIRECTORY "/_nds/TWiLightMenu/unlaunch/backgrounds/"
 
 bool useTwlCfg = false;
@@ -54,6 +56,7 @@ std::vector<std::string> akThemeList;
 std::vector<std::string> r4ThemeList;
 std::vector<std::string> dsiThemeList;
 std::vector<std::string> _3dsThemeList;
+std::vector<std::string> gbaBorderList;
 std::vector<std::string> unlaunchBgList;
 std::vector<std::string> menuSrldrList;
 
@@ -294,6 +297,29 @@ void loadUnlaunchBgList()
 	}
 }
 
+void loadGbaBorderList()
+{
+	DIR *dir;
+	struct dirent *ent;
+	std::string themeDir;
+	if ((dir = opendir(GBA_BORDER_DIRECTORY)) != NULL)
+	{
+		// print all the files and directories within directory 
+		while ((ent = readdir(dir)) != NULL)
+		{
+			// Reallocation here, but prevents our vector from being filled with
+
+			themeDir = ent->d_name;
+			if (themeDir == ".." || themeDir == "..." || themeDir == ".") continue;
+
+			if (extention(themeDir, ".png")) {
+				gbaBorderList.emplace_back(themeDir);
+			}
+		}
+		closedir(dir);
+	}
+}
+
 void loadMenuSrldrList (const char* dirPath) {
 	DIR *dir;
 	struct dirent *ent;
@@ -331,6 +357,11 @@ std::optional<Option> opt_subtheme_select(Option::Int &optVal)
 	default:
 		return nullopt;
 	}
+}
+
+std::optional<Option> opt_gba_border_select(Option::Int &optVal)
+{
+	return Option(STR_BORDERSEL_GBA, STR_AB_SETBORDER, Option::Str(&ms().gbaBorder), gbaBorderList);
 }
 
 std::optional<Option> opt_bg_select(Option::Int &optVal)
@@ -399,9 +430,9 @@ void opt_update()
 			updateText = false;
 		}
 
-		if (!gui().isExited() && currentTheme != 4)
+		if (!gui().isExited())
 		{
-			snd().playBgMusic();
+			snd().playBgMusic(ms().settingsMusic);
 		}
 
 		do
@@ -619,7 +650,10 @@ int main(int argc, char **argv)
 	loadR4ThemeList();
 	load3DSThemeList();
 	loadDSiThemeList();
-	if (ms().consoleModel == 0) {
+	if (sys().isRegularDS()) {
+		loadGbaBorderList();
+	}
+	if ((isDSiMode() || REG_SCFG_EXT != 0) && ms().consoleModel == 0) {
 		loadUnlaunchBgList();
 	}
 	swiWaitForVBlank();
@@ -683,6 +717,11 @@ int main(int argc, char **argv)
 				{0, 1, 4, 5, 3, 2})*/
 				{STR_NINTENDO_DSI, STR_NINTENDO_3DS, STR_SEGA_SATURN, STR_HOMEBREW_LAUNCHER, STR_R4_ORIGINAL, "GameBoy Color"},
 				{0, 1, 4, 5, 2, 6})
+		.option(STR_SETTINGSMUSIC,
+				STR_DESCRIPTION_SETTINGSMUSIC,
+				Option::Int(&ms().settingsMusic),
+				{STR_THEME, STR_OFF, STR_NINTENDO_DSI, STR_NINTENDO_3DS},
+				{-1, 0, 1, 2})
 		.option(STR_DSIMUSIC,
 				STR_DESCRIPTION_DSIMUSIC,
 				Option::Int(&ms().dsiMusic),
@@ -700,7 +739,9 @@ int main(int argc, char **argv)
 		.option(STR_SHOW_HIDDEN, STR_DESCRIPTION_SHOW_HIDDEN_1, Option::Bool(&ms().showHidden), {STR_SHOW, STR_HIDE}, {true, false})
 		.option(STR_PREVENT_ROM_DELETION, STR_DESCRIPTION_PREVENT_ROM_DELETION_1, Option::Bool(&ms().preventDeletion), {STR_YES, STR_NO}, {true, false});
 	if (REG_SCFG_EXT != 0) {
-		guiPage.option(STR_BOXART, STR_DESCRIPTION_BOXART_DSI, Option::Int(&ms().showBoxArt), {STR_NON_CACHED, STR_CACHED, STR_HIDE}, {1, 2, 0});
+		guiPage
+			.option(STR_BOXART, STR_DESCRIPTION_BOXART_DSI, Option::Int(&ms().showBoxArt), {STR_NON_CACHED, STR_CACHED, STR_HIDE}, {1, 2, 0})
+			.option(STR_PHOTO_BOXART_COLOR_DEBAND, STR_DESCRIPTION_PHOTO_BOXART_COLOR_DEBAND, Option::Bool(&ms().boxArtColorDeband), {STR_ON, STR_OFF}, {true, false});
 	} else {
 		if(ms().showBoxArt == 2) // Reset to 1 if not in DSi mode
 			ms().showBoxArt = 1;
@@ -714,14 +755,17 @@ int main(int argc, char **argv)
 
 	SettingsPage emulationPage(STR_EMULATION_HB_SETTINGS);
 
-	if (isDSiMode() && sdAccessible && sys().arm7SCFGLocked() && (ms().showMd == 1 || ms().showMd == 3)) {
-		ms().showMd = 2;	// Use only PicoDriveTWL
-	}
-
 	emulationPage
-		.option(STR_NDS_ROMS, STR_DESCRIPTION_SHOW_NDS, Option::Bool(&ms().showNds), {STR_SHOW, STR_HIDE}, {true, false})
+		.option(STR_NDS_ROMS, STR_DESCRIPTION_SHOW_NDS, Option::Bool(&ms().showNds), {STR_SHOW, STR_HIDE}, {true, false});
+	if (sys().isRegularDS()) {
+		emulationPage.option(STR_GBA_ROMS, STR_DESCRIPTION_SHOW_GBA, Option::Int(&ms().showGba), {STR_HIDE, STR_NATIVE, "GBARunner2"}, {0, 1, 2});
+	} else {
+		emulationPage.option(STR_GBA_ROMS, STR_DESCRIPTION_SHOW_GBA, Option::Int(&ms().showGba), {STR_HIDE, "GBARunner2"}, {0, 2});
+	}
+	emulationPage
 		.option(STR_VIDEOS, STR_DESCRIPTION_SHOW_VIDEO, Option::Bool(&ms().showRvid), {STR_SHOW, STR_HIDE}, {true, false})
 		.option(STR_A26_ROMS, STR_DESCRIPTION_SHOW_A26, Option::Bool(&ms().showA26), {"StellaDS", STR_HIDE}, {true, false})
+		.option(STR_A78_ROMS, STR_DESCRIPTION_SHOW_A78, Option::Bool(&ms().showA78), {"A7800DS", STR_HIDE}, {true, false})
 		.option(STR_NES_ROMS, STR_DESCRIPTION_SHOW_NES, Option::Bool(&ms().showNes), {"nesDS", STR_HIDE}, {true, false})
 		.option(STR_GB_ROMS, STR_DESCRIPTION_SHOW_GB, Option::Bool(&ms().showGb), {"GameYob", STR_HIDE}, {true, false})
 		.option(STR_SMS_ROMS, STR_DESCRIPTION_SHOW_SMS, Option::Bool(&ms().showSmsGg), {"S8DS", STR_HIDE}, {true, false});
@@ -746,6 +790,15 @@ int main(int argc, char **argv)
 
 	SettingsPage gamesPage(STR_GAMESAPPS_SETTINGS);
 
+	if (sys().isRegularDS()) {
+		gamesPage
+			.option(STR_GBABORDER,
+				STR_DESCRIPTION_GBABORDER,
+				Option::Int(&ms().subtheme, opt_gba_border_select, opt_reset_subtheme),
+				{STR_PRESS_A},
+				{0});
+	}
+
 	if (isDSiMode() && sdAccessible && !sys().arm7SCFGLocked())
 	{
 		gamesPage.option((isDSiMode() ? STR_SMSGGINRAM : "Sys SD: "+STR_SMSGGINRAM),
@@ -753,11 +806,6 @@ int main(int argc, char **argv)
 			Option::Bool(&ms().smsGgInRam),
 			{STR_YES, STR_NO},
 			{true, false});
-	}
-
-	if (!isDSiMode() && sys().isRegularDS())
-	{
-		gamesPage.option(STR_USEGBARUNNER2, STR_DESCRIPTION_GBARUNNER2_1, Option::Bool(&ms().useGbarunner), {STR_YES, STR_NO}, {true, false});
 	}
 
 	using TRunIn = TWLSettings::TRunIn;
@@ -789,7 +837,7 @@ int main(int argc, char **argv)
 				gamesPage
 					.option(STR_FCSAVELOCATION, STR_DESCRIPTION_FCSAVELOCATION, Option::Bool(&ms().fcSaveOnSd), {STR_CONSOLE_SD, STR_SLOT_1_SD}, {true, false});
 			}
-		} else if (!isDSiMode() && fatAccessible) {
+		} else if (!isDSiMode() && fatAccessible && (io_dldi_data->ioInterface.features & FEATURE_SLOT_NDS)) {
 			gamesPage.option(STR_USEBOOTSTRAP+" (B4DS)", STR_DESCRIPTION_USEBOOTSTRAP, Option::Bool(&ms().useBootstrap), {STR_YES, STR_NO}, {true, false});
 		}
 		if (sdAccessible && (!isDSiMode() || (isDSiMode() && !sys().arm7SCFGLocked()))) {
@@ -851,7 +899,7 @@ int main(int argc, char **argv)
 	if (isDSiMode() || sdAccessible) {
 		gamesPage.option((isDSiMode() ? STR_EXPANDROMSPACE : "SD: "+STR_EXPANDROMSPACE),
 			(ms().consoleModel==0 ? STR_DESCRIPTION_EXPANDROMSPACE_DSI : STR_DESCRIPTION_EXPANDROMSPACE_3DS),
-			Option::Int(&bs().extendedMemory),
+			Option::Int(&ms().extendedMemory),
 			{STR_NO, STR_YES, STR_YES+"+512KB"},
 			{0, 1, 2});
 		if (sdAccessible) {
@@ -1023,6 +1071,7 @@ int main(int argc, char **argv)
 	}
 	miscPage
 		.option(STR_DSISPLASH, STR_DESCRIPTION_DSISPLASH, Option::Int(&ms().dsiSplash), {STR_WITHOUT_HS, STR_WITH_HS, STR_CUSTOM_SPLASH, STR_HIDE}, {1, 2, 3, 0})
+		.option(STR_NINTENDOLOGOCOLOR, STR_DESCRIPTION_NINTENDOLOGOCOLOR, Option::Int(&ms().nintendoLogoColor), {STR_RED, STR_BLUE, STR_MAGENTA, STR_GRAY}, {1, 2, 3, 0})
 		.option(STR_DSIMENUPPLOGO, STR_DESCRIPTION_DSIMENUPPLOGO_1, Option::Bool(&ms().showlogo), {STR_SHOW, STR_HIDE}, {true, false});
 
 	if (isDSiMode() && sdAccessible) {
@@ -1109,9 +1158,9 @@ int main(int argc, char **argv)
 	//	stop();
 	while (1)
 	{
-		if (!gui().isExited() && currentTheme != 4)
+		if (!gui().isExited())
 		{
-			snd().playBgMusic();
+			snd().playBgMusic(ms().settingsMusic);
 		}
 
 		gui().draw();

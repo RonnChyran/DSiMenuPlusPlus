@@ -157,6 +157,8 @@ void drawIconGG(int Xpos, int Ypos) { glSprite(Xpos, Ypos, GL_FLIP_NONE, getIcon
 void drawIconMD(int Xpos, int Ypos) { glSprite(Xpos, Ypos, GL_FLIP_NONE, getIcon(MD_ICON)); }
 void drawIconSNES(int Xpos, int Ypos) { glSprite(Xpos, Ypos, GL_FLIP_NONE, getIcon(SNES_ICON)); }
 void drawIconPLG(int Xpos, int Ypos) { glSprite(Xpos, Ypos, GL_FLIP_NONE, getIcon(PLG_ICON)); }
+void drawIconA26(int Xpos, int Ypos) { glSprite(Xpos, Ypos, GL_FLIP_NONE, getIcon(A26_ICON)); }
+void drawIconPCE(int Xpos, int Ypos) { glSprite(Xpos, Ypos, GL_FLIP_NONE, getIcon(PCE_ICON)); }
 
 void loadFixedBanner(void) {
 	/* Banner fixes start here */
@@ -524,8 +526,6 @@ void getGameInfo(bool isDir, const char *name, int num) {
 
 		loadFixedBanner();
 
-		DC_FlushAll();
-
 		int currentLang = 0;
 		if (ndsBanner.version == NDS_BANNER_VER_ZH || ndsBanner.version == NDS_BANNER_VER_ZH_KO || ndsBanner.version == NDS_BANNER_VER_DSi) {
 			currentLang = setGameLanguage;
@@ -645,7 +645,6 @@ void iconUpdate(bool isDir, const char *name, int num) {
 		tonccpy((char *)&ndsBanner, bnriconTile[num], 0x23C0);
 
 		// icon
-		DC_FlushAll();
 		if (ms().animateDsiIcons && ndsBanner.version == NDS_BANNER_VER_DSi) {
 			loadIcon(ndsBanner.dsi_icon[0], ndsBanner.dsi_palette[0], num2, true);
 		} else {
@@ -746,6 +745,7 @@ void titleUpdate(bool isDir, const std::string &name, int num) {
 			|| extention(name, ".smc")
 			|| extention(name, ".sfc")
 			|| extention(name, ".a26")
+			|| extention(name, ".a78")
 			|| extention(name, ".pce")) {
 		writeBannerText(name.substr(0, name.find_last_of('.')));
 	} else {

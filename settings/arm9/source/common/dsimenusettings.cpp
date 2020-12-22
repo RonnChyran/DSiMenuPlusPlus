@@ -25,17 +25,20 @@ TWLSettings::TWLSettings()
     wifiLed = true;
     sdRemoveDetect = true;
     showMicroSd = false;
-    useGbarunner = false;
     gbar2DldiAccess = false;
     showMainMenu = false;
     showSelectMenu = false;
     theme = 0;
     subtheme = 0;
+    settingsMusic = -1;
     dsiMusic = 1;
+	boxArtColorDeband = true;
 
     showNds = true;
+	showGba = 1 + isDSiMode();
     showRvid = true;
     showA26 = true;
+    showA78 = true;
     showNes = true;
     showGb = true;
     showSmsGg = true;
@@ -67,6 +70,8 @@ TWLSettings::TWLSettings()
     boostCpu = false;
     boostVram = false;
     bstrap_dsiMode = EDSMode;
+    extendedMemory = 0;
+
     forceSleepPatch = false;
     slot1AccessSD = false;
     slot1SCFGUnlock = false;
@@ -82,7 +87,7 @@ TWLSettings::TWLSettings()
     ak_theme = "zelda";
     ak_zoomIcons = true;
 
-    launchType = ENoLaunch;
+    launchType = -1; // ENoLaunch
     homebrewBootstrap = EReleaseBootstrap;
 
     r4_theme = "unused";
@@ -90,11 +95,13 @@ TWLSettings::TWLSettings()
     dsi_theme = "dark";
     _3ds_theme = "light";
 
+    gbaBorder = "default.png";
     unlaunchBg = "default.gif";
 	removeLauncherPatches = true;
 
     soundFreq = EFreq32KHz;
     dsiSplash = isDSiMode();
+	nintendoLogoColor = 1;
     showlogo = true;
     autorun = false;
     autostartSlot1 = false;
@@ -116,12 +123,20 @@ void TWLSettings::loadSettings()
     consoleModel = settingsini.GetInt("SRLOADER", "CONSOLE_MODEL", consoleModel);
 
     showNds = settingsini.GetInt("SRLOADER", "SHOW_NDS", showNds);
+	showGba = settingsini.GetInt("SRLOADER", "SHOW_GBA", showGba);
+	if (!sys().isRegularDS() && showGba != 0) {
+		showGba = 2;
+	}
     showRvid = settingsini.GetInt("SRLOADER", "SHOW_RVID", showRvid);
     showA26 = settingsini.GetInt("SRLOADER", "SHOW_A26", showA26);
+    showA78 = settingsini.GetInt("SRLOADER", "SHOW_A78", showA78);
     showNes = settingsini.GetInt("SRLOADER", "SHOW_NES", showNes);
     showGb = settingsini.GetInt("SRLOADER", "SHOW_GB", showGb);
     showSmsGg = settingsini.GetInt("SRLOADER", "SHOW_SMSGG", showSmsGg);
     showMd = settingsini.GetInt("SRLOADER", "SHOW_MDGEN", showMd);
+	if (isDSiMode() && (access("sd:/", F_OK) == 0) && sys().arm7SCFGLocked() && (ms().showMd == 1 || ms().showMd == 3)) {
+		ms().showMd = 2;	// Use only PicoDriveTWL
+	}
     showSnes = settingsini.GetInt("SRLOADER", "SHOW_SNES", showSnes);
     showPce = settingsini.GetInt("SRLOADER", "SHOW_PCE", showPce);
 
@@ -135,13 +150,10 @@ void TWLSettings::loadSettings()
     titleLanguage = settingsini.GetInt("SRLOADER", "TITLELANGUAGE", titleLanguage);
     sdRemoveDetect = settingsini.GetInt("SRLOADER", "SD_REMOVE_DETECT", sdRemoveDetect);
     showMicroSd = settingsini.GetInt("SRLOADER", "SHOW_MICROSD", showMicroSd);
-    useGbarunner = settingsini.GetInt("SRLOADER", "USE_GBARUNNER2", useGbarunner);
-    if (!sys().isRegularDS()) {
-        useGbarunner = true;
-    }
     gbar2DldiAccess = settingsini.GetInt("SRLOADER", "GBAR2_DLDI_ACCESS", gbar2DldiAccess);
 
     dsiSplash = settingsini.GetInt("SRLOADER", "DSI_SPLASH", dsiSplash);
+    nintendoLogoColor = settingsini.GetInt("SRLOADER", "NINTENDO_LOGO_COLOR", nintendoLogoColor);
     showlogo = settingsini.GetInt("SRLOADER", "SHOWLOGO", showlogo);
 
     secondaryAccess = settingsini.GetInt("SRLOADER", "SECONDARY_ACCESS", secondaryAccess);
@@ -153,7 +165,9 @@ void TWLSettings::loadSettings()
     showSelectMenu = settingsini.GetInt("SRLOADER", "SHOW_SELECT_MENU", showSelectMenu);
     theme = settingsini.GetInt("SRLOADER", "THEME", theme);
     subtheme = settingsini.GetInt("SRLOADER", "SUB_THEME", subtheme);
+    settingsMusic = settingsini.GetInt("SRLOADER", "SETTINGS_MUSIC", settingsMusic);
     dsiMusic = settingsini.GetInt("SRLOADER", "DSI_MUSIC", dsiMusic);
+	boxArtColorDeband = settingsini.GetInt("SRLOADER", "PHOTO_BOXART_COLOR_DEBAND", boxArtColorDeband);
     updateRecentlyPlayedList = settingsini.GetInt("SRLOADER", "UPDATE_RECENTLY_PLAYED_LIST", updateRecentlyPlayedList);
     sortMethod = settingsini.GetInt("SRLOADER", "SORT_METHOD", sortMethod);
     showDirectories = settingsini.GetInt("SRLOADER", "SHOW_DIRECTORIES", showDirectories);
@@ -177,6 +191,8 @@ void TWLSettings::loadSettings()
     boostCpu = settingsini.GetInt("NDS-BOOTSTRAP", "BOOST_CPU", boostCpu);
     boostVram = settingsini.GetInt("NDS-BOOTSTRAP", "BOOST_VRAM", boostVram);
     bstrap_dsiMode = settingsini.GetInt("NDS-BOOTSTRAP", "DSI_MODE", bstrap_dsiMode);
+	extendedMemory = settingsini.GetInt("NDS-BOOTSTRAP", "EXTENDED_MEMORY", extendedMemory);
+
     forceSleepPatch = settingsini.GetInt("NDS-BOOTSTRAP", "FORCE_SLEEP_PATCH", forceSleepPatch);
     soundFreq = settingsini.GetInt("NDS-BOOTSTRAP", "SOUND_FREQ", soundFreq);
     slot1AccessSD = settingsini.GetInt("SRLOADER", "SLOT1_ENABLESD", slot1AccessSD);
@@ -200,6 +216,7 @@ void TWLSettings::loadSettings()
     r4_theme = settingsini.GetString("SRLOADER", "R4_THEME", r4_theme);
     dsi_theme = settingsini.GetString("SRLOADER", "DSI_THEME", dsi_theme);
     _3ds_theme = settingsini.GetString("SRLOADER", "3DS_THEME", _3ds_theme);
+    gbaBorder = settingsini.GetString("SRLOADER", "GBA_BORDER", gbaBorder);
     unlaunchBg = settingsini.GetString("SRLOADER", "UNLAUNCH_BG", unlaunchBg);
 	removeLauncherPatches = settingsini.GetInt("SRLOADER", "UNLAUNCH_PATCH_REMOVE", removeLauncherPatches);
 
@@ -233,12 +250,12 @@ void TWLSettings::saveSettings()
     settingsini.SetInt("SRLOADER", "WIFI_LED", wifiLed);
     settingsini.SetInt("SRLOADER", "LANGUAGE", guiLanguage);
     settingsini.SetInt("SRLOADER", "TITLELANGUAGE", titleLanguage);
-    settingsini.SetInt("SRLOADER", "USE_GBARUNNER2", useGbarunner);
     settingsini.SetInt("SRLOADER", "GBAR2_DLDI_ACCESS", gbar2DldiAccess);
     settingsini.SetInt("SRLOADER", "SD_REMOVE_DETECT", sdRemoveDetect);
     settingsini.SetInt("SRLOADER", "SHOW_MICROSD", showMicroSd);
 
     settingsini.SetInt("SRLOADER", "DSI_SPLASH", dsiSplash);
+    settingsini.SetInt("SRLOADER", "NINTENDO_LOGO_COLOR", nintendoLogoColor);
     settingsini.SetInt("SRLOADER", "SHOWLOGO", showlogo);
 
     settingsini.SetInt("SRLOADER", "SECONDARY_ACCESS", secondaryAccess);
@@ -246,10 +263,14 @@ void TWLSettings::saveSettings()
     settingsini.SetInt("SRLOADER", "SHOW_SELECT_MENU", showSelectMenu);
     settingsini.SetInt("SRLOADER", "THEME", theme);
     settingsini.SetInt("SRLOADER", "SUB_THEME", subtheme);
+    settingsini.SetInt("SRLOADER", "SETTINGS_MUSIC", settingsMusic);
     settingsini.SetInt("SRLOADER", "DSI_MUSIC", dsiMusic);
+	settingsini.SetInt("SRLOADER", "PHOTO_BOXART_COLOR_DEBAND", boxArtColorDeband);
     settingsini.SetInt("SRLOADER", "SHOW_NDS", showNds);
+    settingsini.SetInt("SRLOADER", "SHOW_GBA", showGba);
     settingsini.SetInt("SRLOADER", "SHOW_RVID", showRvid);
     settingsini.SetInt("SRLOADER", "SHOW_A26", showA26);
+    settingsini.SetInt("SRLOADER", "SHOW_A78", showA78);
     settingsini.SetInt("SRLOADER", "SHOW_NES", showNes);
     settingsini.SetInt("SRLOADER", "SHOW_GB", showGb);
     settingsini.SetInt("SRLOADER", "SHOW_SMSGG", showSmsGg);
@@ -280,6 +301,8 @@ void TWLSettings::saveSettings()
     settingsini.SetInt("NDS-BOOTSTRAP", "BOOST_CPU", boostCpu);
     settingsini.SetInt("NDS-BOOTSTRAP", "BOOST_VRAM", boostVram);
     settingsini.SetInt("NDS-BOOTSTRAP", "DSI_MODE", bstrap_dsiMode);
+	settingsini.SetInt("NDS-BOOTSTRAP", "EXTENDED_MEMORY", extendedMemory);
+
     settingsini.SetInt("NDS-BOOTSTRAP", "FORCE_SLEEP_PATCH", forceSleepPatch);
     settingsini.SetInt("NDS-BOOTSTRAP", "SOUND_FREQ", soundFreq);
     settingsini.SetInt("SRLOADER", "SLOT1_ENABLESD", slot1AccessSD);
@@ -296,6 +319,7 @@ void TWLSettings::saveSettings()
     settingsini.SetString("SRLOADER", "R4_THEME", r4_theme);
     settingsini.SetString("SRLOADER", "DSI_THEME", dsi_theme);
     settingsini.SetString("SRLOADER", "3DS_THEME", _3ds_theme);
+    settingsini.SetString("SRLOADER", "GBA_BORDER", gbaBorder);
     settingsini.SetString("SRLOADER", "UNLAUNCH_BG", unlaunchBg);
 	settingsini.SetInt("SRLOADER", "UNLAUNCH_PATCH_REMOVE", removeLauncherPatches);
 

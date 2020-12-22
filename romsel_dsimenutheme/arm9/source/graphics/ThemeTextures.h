@@ -11,6 +11,8 @@
 
 #define BG_BUFFER_PIXELCOUNT 256 * 192
 
+extern bool boxArtColorDeband;
+
 extern int boxArtType[40];
 
 using std::unique_ptr;
@@ -145,6 +147,8 @@ public:
 	const Texture *iconSMSTexture() { return _iconSMSTexture.get(); }
 	const Texture *iconSNESTexture() { return _iconSNESTexture.get(); }
 	const Texture *iconPLGTexture() { return _iconPLGTexture.get(); }
+	const Texture *iconA26Texture() { return _iconA26Texture.get(); }
+	const Texture *iconPCETexture() { return _iconPCETexture.get(); }
 	const Texture *iconUnknownTexture() { return _iconUnknownTexture.get(); }
 
 	const Texture *dateTimeFontTexture() { return _dateTimeFontTexture.get(); }
@@ -154,7 +158,11 @@ public:
 	const Texture *rightShoulderGreyedTexture() { return _rightShoulderGreyedTexture.get(); }
 
 	static u16* bmpImageBuffer();
+	static u16* bgSubBuffer2();
 	static u16* photoBuffer();
+	static u16* photoBuffer2();
+	static u16* frameBuffer(bool secondBuffer);
+	static u16* frameBufferBot(bool secondBuffer);
 
 	const Texture *volumeTexture(int texture) {
 		switch(texture) {
@@ -262,6 +270,8 @@ private:
 	unique_ptr<Texture> _iconSMSTexture;
 	unique_ptr<Texture> _iconSNESTexture;
 	unique_ptr<Texture> _iconPLGTexture;
+	unique_ptr<Texture> _iconA26Texture;
+	unique_ptr<Texture> _iconPCETexture;
 	unique_ptr<Texture> _iconUnknownTexture;
 
 	unique_ptr<Texture> _volume0Texture;

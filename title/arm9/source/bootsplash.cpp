@@ -21,11 +21,15 @@ extern int screenBrightness;
 
 bool cartInserted;
 
+extern char soundBank[];
+extern bool soundBankInited;
+
 mm_sound_effect dsiboot;
 mm_sound_effect proceed;
 
 void splashSoundInit() {
-	mmInitDefaultMem((mm_addr)0x02FA0000);
+	mmInitDefaultMem((mm_addr)soundBank);
+	soundBankInited = true;
 
 	mmLoadEffect( SFX_DSIBOOT );
 	mmLoadEffect( SFX_SELECT );
@@ -115,6 +119,27 @@ void bootSplashDSi(void) {
 		lodepng::decode(image, width, height, virtualPain ? "nitro:/graphics/nintendoPain.png" : "nitro:/graphics/nintendo.png");
 
 		for(unsigned int i = 0, y = 0, x = 0;i < image.size() / 4; i++, x++) {
+			if (!virtualPain && image[(i * 4) + 3] > 0) {
+				switch (ms().nintendoLogoColor) {
+					default: // Gray (Original color)
+						break;
+					case 1: // Red (Current color)
+						image[(i * 4) + 0] = 0xFF;
+						image[(i * 4) + 1] = 0;
+						image[(i * 4) + 2] = 0;
+						break;
+					case 2: // Blue (Past JAP color)
+						image[(i * 4) + 0] = 0;
+						image[(i * 4) + 1] = 0;
+						image[(i * 4) + 2] = 0xFF;
+						break;
+					case 3: // Magneta (GBA color)
+						image[(i * 4) + 0] = 0xFF;
+						image[(i * 4) + 1] = 0;
+						image[(i * 4) + 2] = 0xFF;
+						break;
+				}
+			}
 			u16 color = image[i * 4] >> 3 | (image[(i * 4) + 1] >> 3) << 5 | (image[(i * 4) + 2] >> 3) << 10 | (image[(i * 4) + 3] > 0) << 15;
 			if (ms().colorMode == 1) {
 				color = convertVramColorToGrayscale(color);

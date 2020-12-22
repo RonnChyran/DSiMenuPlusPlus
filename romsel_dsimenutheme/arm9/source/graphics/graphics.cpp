@@ -42,6 +42,7 @@
 #include "launchDots.h"
 #include "queueControl.h"
 #include "sound.h"
+#include "ndma.h"
 #include "ThemeConfig.h"
 #include "themefilenames.h"
 #include "tool/colortool.h"
@@ -110,6 +111,7 @@ extern bool titleboxXmoveright;
 extern bool applaunchprep;
 
 int screenBrightness = 31;
+static bool secondBuffer = false;
 
 static int colonTimer = 0;
 extern bool showColon;
@@ -136,6 +138,8 @@ bool showRshoulder = false;
 int movecloseXpos = 0;
 
 bool showProgressIcon = false;
+bool showProgressBar = false;
+int progressBarLength = 0;
 
 int progressAnimNum = 0;
 int progressAnimDelay = 0;
@@ -158,11 +162,11 @@ float dbox_movespeed = 22;
 float dbox_Ypos = -192;
 int bottomScreenBrightness = 255;
 
-int bottomBgState = 0; // 0 = Uninitialized 1 = No Bubble 2 = bubble 3 = moving.
+int bottomBgState = 0; // 0 = Uninitialized, 1 = No Bubble, 2 = bubble, 3 = moving.
 
 int vblankRefreshCounter = 0;
 
-bool rotatingCubesLoaded = false;
+u32 rotatingCubesLoaded = false;	// u32 used instead of bool, to fix a weird bug
 
 bool rocketVideo_playVideo = false;
 int rocketVideo_videoYpos = 78;
@@ -486,6 +490,12 @@ void vBlankHandler() {
 
 	if (ms().theme == 1 && rotatingCubesLoaded) {
 		playRotatingCubesVideo();
+	}
+
+	if (boxArtColorDeband) {
+		//ndmaCopyWordsAsynch(0, tex().frameBuffer(secondBuffer), BG_GFX, 0x18000);
+		dmaCopyHalfWordsAsynch(1, tex().frameBufferBot(secondBuffer), BG_GFX_SUB, 0x18000);
+		secondBuffer = !secondBuffer;
 	}
 
 		if (fadeType == true) {
@@ -962,6 +972,18 @@ void vBlankHandler() {
 									 (titleboxYpos - 1) +
 										 titleboxYposDropDown[i % 5],
 									 GL_FLIP_NONE, &tex().settingsImage()[1]);
+							else if (bnrRomType[i] == 11)
+								drawIconPCE((j * 2496 / 39) + 144 -
+										 titleboxXpos[ms().secondaryDevice] +
+										 movingAppXFix,
+										 (titleboxYpos + 12) +
+										 titleboxYposDropDown[i % 5]);
+							else if (bnrRomType[i] == 10)
+								drawIconA26((j * 2496 / 39) + 144 -
+										 titleboxXpos[ms().secondaryDevice] +
+										 movingAppXFix,
+										 (titleboxYpos + 12) +
+										 titleboxYposDropDown[i % 5]);
 							else if (bnrRomType[i] == 9)
 								drawIconPLG((j * 2496 / 39) + 144 -
 										 titleboxXpos[ms().secondaryDevice] +
@@ -1046,6 +1068,16 @@ void vBlankHandler() {
 									 (titleboxYpos - 1) +
 										 titleboxYposDropDown[i % 5],
 									 GL_FLIP_NONE, &tex().settingsImage()[1]);
+							else if (bnrRomType[i] == 11)
+								drawIconPCE(
+									iconXpos - titleboxXpos[ms().secondaryDevice] +
+									movecloseXpos,
+									(titleboxYpos + 12) + titleboxYposDropDown[i % 5]);
+							else if (bnrRomType[i] == 10)
+								drawIconA26(
+									iconXpos - titleboxXpos[ms().secondaryDevice] +
+									movecloseXpos,
+									(titleboxYpos + 12) + titleboxYposDropDown[i % 5]);
 							else if (bnrRomType[i] == 9)
 								drawIconPLG(
 									iconXpos - titleboxXpos[ms().secondaryDevice] +
@@ -1158,7 +1190,7 @@ void vBlankHandler() {
 				// for (int i = 0; i < 2; i++) {
 					topIconXpos -= 14;
 				//}
-				if (ms().useGbarunner) {
+				if (ms().showGba == 2) {
 					drawSmallIconGBA(topIconXpos, 1); // GBARunner2
 				} else {
 					glSprite(topIconXpos, 1, GL_FLIP_NONE, &tex().smallCartImage()[3]); // GBA Mode
@@ -1184,6 +1216,10 @@ void vBlankHandler() {
 				}
 				if (bnrSysSettings[CURPOS])
 					glSprite(84, 83 - titleboxYmovepos, GL_FLIP_NONE, &tex().settingsImage()[1]);
+				else if (bnrRomType[CURPOS] == 11)
+					drawIconPCE(112, 96 - titleboxYmovepos);
+				else if (bnrRomType[CURPOS] == 10)
+					drawIconA26(112, 96 - titleboxYmovepos);
 				else if (bnrRomType[CURPOS] == 9)
 					drawIconPLG(112, 96 - titleboxYmovepos);
 				else if (bnrRomType[CURPOS] == 8)
@@ -1286,7 +1322,7 @@ void vBlankHandler() {
 					}
 					selIconYpos += 28;
 				}
-				if (!ms().useGbarunner && sys().isRegularDS()) {
+				if (sys().isRegularDS() && ms().showGba != 2) {
 				/*	drawSmallIconGBA(32, (ms().theme == 4 ? 0 : dbox_Ypos) + selIconYpos); // GBARunner2
 				} else {*/
 					glSprite(32, (ms().theme == 4 ? 0 : dbox_Ypos) + selIconYpos, GL_FLIP_NONE,
@@ -1306,8 +1342,21 @@ void vBlankHandler() {
 			}*/
 		if (whiteScreen) {
 			glBoxFilled(0, 0, 256, 192, RGB15(31, 31 - (3 * ms().blfLevel), 31 - (6 * ms().blfLevel)));
-			if (showProgressIcon)
-				glSprite(224, 152, GL_FLIP_NONE, &tex().progressImage()[progressAnimNum]);
+		}
+		if (showProgressIcon && ms().theme != 4) {
+			glSprite(224, 152, GL_FLIP_NONE, &tex().progressImage()[progressAnimNum]);
+		}
+		if (showProgressBar) {
+			int barXpos = 19;
+			int barYpos = 157;
+			if (ms().theme == 4) {
+				barXpos += 12;
+				barYpos += 12;
+			}
+			glBoxFilled(barXpos, barYpos, barXpos+192, barYpos+5, RGB15(23, 23, 23));
+			if (progressBarLength > 0) {
+				glBoxFilled(barXpos, barYpos, barXpos+progressBarLength, barYpos+5, RGB15(0, 0, 31 - (6 * ms().blfLevel)));
+			}
 		}
 
 		if (vblankRefreshCounter >= REFRESH_EVERY_VBLANKS) {
@@ -1315,7 +1364,6 @@ void vBlankHandler() {
 				// Reload the dialog box palettes here...
 				reloadDboxPalette();
 			} else if (!showdialogbox) {
-
 				reloadIconPalettes();
 			}
 			vblankRefreshCounter = 0;
@@ -1413,7 +1461,6 @@ void vBlankHandler() {
 	// 	launchDotDoFrameChange = !launchDotDoFrameChange;
 
 	bottomBgRefresh(); // Refresh the background image on vblank
-	updateText(false);
 }
 
 void loadPhoto(const std::string &path);
@@ -1453,6 +1500,7 @@ void loadPhotoList() {
 
 void loadPhoto(const std::string &path) {
 	std::vector<unsigned char> image;
+	bool alternatePixel = false;
 
 	lodepng::decode(image, photoWidth, photoHeight, path);
 
@@ -1463,13 +1511,60 @@ void loadPhoto(const std::string &path) {
 	}
 
 	for(uint i=0;i<image.size()/4;i++) {
+		if (boxArtColorDeband) {
+			image[(i*4)+3] = 0;
+			if (alternatePixel) {
+				if (image[(i*4)] >= 0x4) {
+					image[(i*4)] -= 0x4;
+					image[(i*4)+3] |= BIT(0);
+				}
+				if (image[(i*4)+1] >= 0x4) {
+					image[(i*4)+1] -= 0x4;
+					image[(i*4)+3] |= BIT(1);
+				}
+				if (image[(i*4)+2] >= 0x4) {
+					image[(i*4)+2] -= 0x4;
+					image[(i*4)+3] |= BIT(2);
+				}
+			}
+		}
 		tex().photoBuffer()[i] = image[i*4]>>3 | (image[(i*4)+1]>>3)<<5 | (image[(i*4)+2]>>3)<<10 | BIT(15);
 		if (ms().colorMode == 1) {
 			tex().photoBuffer()[i] = convertVramColorToGrayscale(tex().photoBuffer()[i]);
 		}
+		if (boxArtColorDeband) {
+			if (alternatePixel) {
+				if (image[(i*4)+3] & BIT(0)) {
+					image[(i*4)] += 0x4;
+				}
+				if (image[(i*4)+3] & BIT(1)) {
+					image[(i*4)+1] += 0x4;
+				}
+				if (image[(i*4)+3] & BIT(2)) {
+					image[(i*4)+2] += 0x4;
+				}
+			} else {
+				if (image[(i*4)] >= 0x4) {
+					image[(i*4)] -= 0x4;
+				}
+				if (image[(i*4)+1] >= 0x4) {
+					image[(i*4)+1] -= 0x4;
+				}
+				if (image[(i*4)+2] >= 0x4) {
+					image[(i*4)+2] -= 0x4;
+				}
+			}
+			tex().photoBuffer2()[i] = image[i*4]>>3 | (image[(i*4)+1]>>3)<<5 | (image[(i*4)+2]>>3)<<10 | BIT(15);
+			if (ms().colorMode == 1) {
+				tex().photoBuffer2()[i] = convertVramColorToGrayscale(tex().photoBuffer()[i]);
+			}
+			if ((i % photoWidth) == photoWidth-1) alternatePixel = !alternatePixel;
+			alternatePixel = !alternatePixel;
+		}
 	}
 
 	u16 *bgSubBuffer = tex().beginBgSubModify();
+	u16* bgSubBuffer2 = tex().bgSubBuffer2();
 
 	// Fill area with black
 	for(int y = 24; y < 180; y++) {
@@ -1478,6 +1573,7 @@ void loadPhoto(const std::string &path) {
 
 	// Start loading
 	u16 *src = tex().photoBuffer();
+	u16 *src2 = tex().photoBuffer2();
 	uint startX = 24 + (208 - photoWidth) / 2;
 	uint y = 24 + ((156 - photoHeight) / 2);
 	uint x = startX;
@@ -1487,6 +1583,9 @@ void loadPhoto(const std::string &path) {
 			y++;
 		}
 		bgSubBuffer[y * 256 + x] = *(src++);
+		if (boxArtColorDeband) {
+			bgSubBuffer2[y * 256 + x] = *(src2++);
+		}
 		x++;
 	}
 	tex().commitBgSubModify();
@@ -1495,6 +1594,7 @@ void loadPhoto(const std::string &path) {
 // Load photo without overwriting shoulder button images
 void loadPhotoPart() {
 	u16 *bgSubBuffer = tex().beginBgSubModify();
+	u16* bgSubBuffer2 = tex().bgSubBuffer2();
 
 	// Fill area with black
 	for(int y = 24; y < 172; y++) {
@@ -1503,6 +1603,7 @@ void loadPhotoPart() {
 
 	// Start loading
 	u16 *src = tex().photoBuffer();
+	u16 *src2 = tex().photoBuffer2();
 	uint startX = 24 + (208 - photoWidth) / 2;
 	uint y = 24 + ((156 - photoHeight) / 2);
 	uint x = startX;
@@ -1513,6 +1614,9 @@ void loadPhotoPart() {
 			if(y >= 172)	break;
 		}
 		bgSubBuffer[y * 256 + x] = *(src++);
+		if (boxArtColorDeband) {
+			bgSubBuffer2[y * 256 + x] = *(src2++);
+		}
 		x++;
 	}
 	tex().commitBgSubModify();
@@ -1677,13 +1781,15 @@ void loadRotatingCubes() {
 
 		if (REG_SCFG_EXT != 0) {
 			doRead = true;
-		} else if (sys().isRegularDS()) {
+		} else if (sys().isRegularDS() && (io_dldi_data->ioInterface.features & FEATURE_SLOT_NDS)) {
 			sysSetCartOwner(BUS_OWNER_ARM9); // Allow arm9 to access GBA ROM (or in this case, the DS Memory
 							 // Expansion Pak)
-			*(vu32 *)(0x08240000) = 1;
-			if (*(vu32 *)(0x08240000) == 1) {
+			if (*(u16*)(0x020000C0) == 0) {
+				*(vu16*)(0x08240000) = 1;
+			}
+			if (*(u16*)(0x020000C0) != 0 || *(vu16*)(0x08240000) == 1) {
 				// Set to load video into DS Memory Expansion Pak
-				rotatingCubesLocation = (u8 *)0x09000000;
+				rotatingCubesLocation = (u8*)(*(u16*)(0x020000C0)==0x5A45 ? 0x08000200 : 0x09000000);
 				doRead = true;
 			}
 		}

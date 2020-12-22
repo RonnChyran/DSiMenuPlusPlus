@@ -1,6 +1,9 @@
 #include <nds.h>
 #include <nds/arm9/dldi.h>
-#include <maxmod9.h>
+#include "io_m3_common.h"
+#include "io_g6_common.h"
+#include "io_sc_common.h"
+#include "exptools.h"
 
 #include <stdio.h>
 #include <fat.h>
@@ -10,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <gl2d.h>
+#include <maxmod9.h>
 
 #include "date.h"
 #include "fileCopy.h"
@@ -63,6 +67,9 @@ int fps = 60;
 int colorMode = 0;
 int blfLevel = 0;
 
+extern bool showProgressBar;
+extern int progressBarLength;
+
 bool cardEjected = false;
 static bool cardRefreshed = false;
 
@@ -78,6 +85,7 @@ std::string dsiWarePubPath;
 std::string dsiWarePrvPath;
 
 const char *charUnlaunchBg;
+std::string gbaBorder = "default.png";
 std::string unlaunchBg = "default.gif";
 bool removeLauncherPatches = true;
 
@@ -163,10 +171,10 @@ bool dlplayFound = false;
 bool pictochatReboot = false;
 bool dlplayReboot = false;
 bool sdRemoveDetect = true;
-bool useGbarunner = false;
 bool gbar2DldiAccess = false;	// false == ARM9, true == ARM7
 int theme = 0;
 int subtheme = 0;
+int showGba = 2;
 int showMd = 3;
 int cursorPosition[2] = {0};
 int startMenu_cursorPosition = 0;
@@ -183,11 +191,13 @@ int titleLanguage = -1;
 bool boostCpu = false;	// false == NTR, true == TWL
 bool boostVram = false;
 int bstrap_dsiMode = 0;
+int bstrap_extendedMemory = 0;
 bool forceSleepPatch = false;
 bool dsiWareBooter = false;
 
 void LoadSettings(void) {
 	useBootstrap = isDSiMode();
+	showGba = 1 + isDSiMode();
 
 	// GUI
 	CIniFile settingsini( settingsinipath );
@@ -195,6 +205,10 @@ void LoadSettings(void) {
 	// UI settings.
 	consoleModel = settingsini.GetInt("SRLOADER", "CONSOLE_MODEL", 0);
 
+	showGba = settingsini.GetInt("SRLOADER", "SHOW_GBA", showGba);
+	if (!isRegularDS && showGba != 0) {
+		showGba = 2;
+	}
 	showMd = settingsini.GetInt("SRLOADER", "SHOW_MDGEN", showMd);
 
 	// Customizable UI settings.
@@ -204,8 +218,6 @@ void LoadSettings(void) {
 	guiLanguage = settingsini.GetInt("SRLOADER", "LANGUAGE", -1);
 	titleLanguage = settingsini.GetInt("SRLOADER", "TITLELANGUAGE", titleLanguage);
 	sdRemoveDetect = settingsini.GetInt("SRLOADER", "SD_REMOVE_DETECT", 1);
-	useGbarunner = settingsini.GetInt("SRLOADER", "USE_GBARUNNER2", 0);
-	if (!isRegularDS) useGbarunner = true;
 	gbar2DldiAccess = settingsini.GetInt("SRLOADER", "GBAR2_DLDI_ACCESS", gbar2DldiAccess);
 	theme = settingsini.GetInt("SRLOADER", "THEME", 0);
 	subtheme = settingsini.GetInt("SRLOADER", "SUB_THEME", 0);
@@ -222,12 +234,16 @@ void LoadSettings(void) {
 
 	slot1LaunchMethod = settingsini.GetInt("SRLOADER", "SLOT1_LAUNCHMETHOD", slot1LaunchMethod);
 	useBootstrap = settingsini.GetInt("SRLOADER", "USE_BOOTSTRAP", useBootstrap);
+	if (isRegularDS && (io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA)) {
+		useBootstrap = true;
+	}
 	bootstrapFile = settingsini.GetInt("SRLOADER", "BOOTSTRAP_FILE", 0);
     //snesEmulator = settingsini.GetInt("SRLOADER", "SNES_EMULATOR", snesEmulator);
     smsGgInRam = settingsini.GetInt("SRLOADER", "SMS_GG_IN_RAM", smsGgInRam);
 
     show12hrClock = settingsini.GetInt("SRLOADER", "SHOW_12H_CLOCK", show12hrClock);
 
+    gbaBorder = settingsini.GetString("SRLOADER", "GBA_BORDER", gbaBorder);
     unlaunchBg = settingsini.GetString("SRLOADER", "UNLAUNCH_BG", unlaunchBg);
 	charUnlaunchBg = unlaunchBg.c_str();
 	removeLauncherPatches = settingsini.GetInt("SRLOADER", "UNLAUNCH_PATCH_REMOVE", removeLauncherPatches);
@@ -237,12 +253,15 @@ void LoadSettings(void) {
 	boostCpu = settingsini.GetInt("NDS-BOOTSTRAP", "BOOST_CPU", 0);
 	boostVram = settingsini.GetInt("NDS-BOOTSTRAP", "BOOST_VRAM", 0);
 	bstrap_dsiMode = settingsini.GetInt("NDS-BOOTSTRAP", "DSI_MODE", 0);
+	bstrap_extendedMemory = settingsini.GetInt("NDS-BOOTSTRAP", "EXTENDED_MEMORY", 0);
+
 	forceSleepPatch = settingsini.GetInt("NDS-BOOTSTRAP", "FORCE_SLEEP_PATCH", 0);
 	dsiWareBooter = settingsini.GetInt("SRLOADER", "DSIWARE_BOOTER", dsiWareBooter);
 
 	dsiWareSrlPath = settingsini.GetString("SRLOADER", "DSIWARE_SRL", dsiWareSrlPath);
 	dsiWarePubPath = settingsini.GetString("SRLOADER", "DSIWARE_PUB", dsiWarePubPath);
 	dsiWarePrvPath = settingsini.GetString("SRLOADER", "DSIWARE_PRV", dsiWarePrvPath);
+	slot1Launched = settingsini.GetInt("SRLOADER", "SLOT1_LAUNCHED", slot1Launched);
 	launchType[0] = settingsini.GetInt("SRLOADER", "LAUNCH_TYPE", launchType[0]);
 	launchType[1] = settingsini.GetInt("SRLOADER", "SECONDARY_LAUNCH_TYPE", launchType[1]);
 	romPath[0] = settingsini.GetString("SRLOADER", "ROM_PATH", romPath[0]);
@@ -812,6 +831,48 @@ void dsCardLaunch() {
 	stop();
 }
 
+void s2RamAccess(bool open) {
+	if (io_dldi_data->ioInterface.features & FEATURE_SLOT_NDS) return;
+
+	if (open) {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode(M3_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation(G6_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode(SC_MODE_RAM);
+		}
+	} else {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode(M3_MODE_MEDIA);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation(G6_MODE_MEDIA);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode(SC_MODE_MEDIA);
+		}
+	}
+}
+
+void gbaSramAccess(bool open) {
+	if (open) {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode(M3_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation(G6_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode(SC_MODE_RAM_RO);
+		}
+	} else {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode((io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) ? M3_MODE_MEDIA : M3_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation((io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) ? G6_MODE_MEDIA : G6_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode((io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) ? SC_MODE_MEDIA : SC_MODE_RAM);
+		}
+	}
+}
+
 void directCardLaunch() {
 	/*if (memcmp(ndsCardHeader.gameCode, "ALXX", 4) == 0) {
 		u16 alxxBannerCrc = 0;
@@ -872,6 +933,9 @@ void refreshNdsCard() {
 	iconUpdate (1, false, "slot1");
 	bnrRomType[1] = 0;
 	boxArtType[1] = 0;
+
+	// Power off after done retrieving info
+	disableSlot1();
 
 	cardRefreshed = true;
 	cardEjected = false;
@@ -1102,34 +1166,12 @@ int main(int argc, char **argv) {
 	
 	bool menuButtonPressed = false;
 	
-	if (flashcardFound()) {
-		// Move .sav back to "saves" folder
-		std::string filename = romPath[true];
-		const size_t last_slash_idx = filename.find_last_of("/");
-		if (std::string::npos != last_slash_idx) {
-			filename.erase(0, last_slash_idx + 1);
-		}
-
-		loadPerGameSettings(filename);
-
-		const char *typeToReplace = ".nds";
-		if (extention(filename, ".dsi")) {
-			typeToReplace = ".dsi";
-		} else if (extention(filename, ".ids")) {
-			typeToReplace = ".ids";
-		} else if (extention(filename, ".srl")) {
-			typeToReplace = ".srl";
-		} else if (extention(filename, ".app")) {
-			typeToReplace = ".app";
-		}
-
-		std::string savename = replaceAll(filename, typeToReplace, getSavExtension());
-		std::string savenameFc = replaceAll(filename, typeToReplace, ".sav");
-		std::string romFolderNoSlash = romfolder[true];
-		RemoveTrailingSlashes(romFolderNoSlash);
-		std::string savepath = romFolderNoSlash + "/saves/" + savename;
-		std::string savepathFc = romFolderNoSlash + "/" + savenameFc;
-		rename(savepathFc.c_str(), savepath.c_str());
+	if (showGba == 1) {
+	  if (*(u16*)(0x020000C0) != 0) {
+		sysSetCartOwner(BUS_OWNER_ARM9); // Allow arm9 to access GBA ROM
+	  } else {
+		showGba = 0;	// Hide GBA ROMs
+	  }
 	}
 
 	if (consoleModel < 2
@@ -1167,6 +1209,7 @@ int main(int argc, char **argv) {
 	bottomBgLoad();
 	
 	bool romFound[2] = {false};
+	char boxArtPath[2][256];
 
 	// SD card
 	if (sdFound() && romPath[0] != "" && access(romPath[0].c_str(), F_OK) == 0) {
@@ -1190,7 +1233,13 @@ int main(int argc, char **argv) {
 			iconUpdate (0, false, filename[0].c_str());
 			bnrRomType[0] = 0;
 			boxArtType[0] = 0;
-		} else if (extention(filename[0], ".plg") || extention(filename[0], ".rvid") || extention(filename[0], ".mp4") || extention(filename[0], ".a26") || extention(filename[0], ".pce")) {
+		} else if (extention(filename[0], ".pce")) {
+			bnrRomType[0] = 11;
+			boxArtType[0] = 0;
+		} else if (extention(filename[0], ".a26") || extention(filename[0], ".a78")) {
+			bnrRomType[0] = 10;
+			boxArtType[0] = 0;
+		} else if (extention(filename[0], ".plg") || extention(filename[0], ".rvid") || extention(filename[0], ".mp4")) {
 			bnrRomType[0] = 9;
 			boxArtType[0] = 0;
 		} else if (extention(filename[0], ".gba")) {
@@ -1224,6 +1273,45 @@ int main(int argc, char **argv) {
 			bnrRomType[0] = 8;
 			boxArtType[0] = 2;
 		}
+
+		if (showBoxArt) {
+			// Store box art path
+			std::string temp_filename = filename[0];
+			sprintf (boxArtPath[0], (sdFound() ? "sd:/_nds/TWiLightMenu/boxart/%s.png" : "fat:/_nds/TWiLightMenu/boxart/%s.png"), filename[0].c_str());
+			if ((access(boxArtPath[0], F_OK) != 0) && (bnrRomType[0] == 0)) {
+				if(extention(filename[0], ".argv")) {
+					vector<char*> argarray;
+
+					FILE *argfile = fopen(filename[0].c_str(),"rb");
+						char str[PATH_MAX], *pstr;
+					const char seps[]= "\n\r\t ";
+
+					while( fgets(str, PATH_MAX, argfile) ) {
+						// Find comment and end string there
+						if( (pstr = strchr(str, '#')) )
+							*pstr= '\0';
+
+						// Tokenize arguments
+						pstr= strtok(str, seps);
+
+						while( pstr != NULL ) {
+							argarray.push_back(strdup(pstr));
+							pstr= strtok(NULL, seps);
+						}
+					}
+					fclose(argfile);
+					temp_filename = argarray.at(0);
+				}
+				// Get game's TID
+				FILE *f_nds_file = fopen(temp_filename.c_str(), "rb");
+				char game_TID[5];
+				grabTID(f_nds_file, game_TID);
+				game_TID[4] = 0;
+				fclose(f_nds_file);
+
+				sprintf (boxArtPath[0], (sdFound() ? "sd:/_nds/TWiLightMenu/boxart/%s.png" : "fat:/_nds/TWiLightMenu/boxart/%s.png"), game_TID);
+			}
+		}
 	}
 
 	// Flashcard (Secondary device)
@@ -1248,7 +1336,13 @@ int main(int argc, char **argv) {
 			iconUpdate (1, false, filename[1].c_str());
 			bnrRomType[1] = 0;
 			boxArtType[1] = 0;
-		} else if (extention(filename[1], ".plg") || extention(filename[1], ".rvid") || extention(filename[1], ".mp4") || extention(filename[1], ".a26")) {
+		} else if (extention(filename[1], ".pce")) {
+			bnrRomType[1] = 11;
+			boxArtType[1] = 0;
+		} else if (extention(filename[1], ".a26") || extention(filename[1], ".a78")) {
+			bnrRomType[1] = 10;
+			boxArtType[1] = 0;
+		} else if (extention(filename[1], ".plg") || extention(filename[1], ".rvid") || extention(filename[1], ".mp4")) {
 			bnrRomType[1] = 9;
 			boxArtType[1] = 0;
 		} else if (extention(filename[1], ".gba")) {
@@ -1285,10 +1379,9 @@ int main(int argc, char **argv) {
 
 		if (showBoxArt) {
 			// Store box art path
-			std::string temp_filename = filename[secondaryDevice];
-			char boxArtPath[256];
-			snprintf (boxArtPath, sizeof(boxArtPath), (sdFound() ? "sd:/_nds/TWiLightMenu/boxart/%s.png" : "fat:/_nds/TWiLightMenu/boxart/%s.png"), filename[0].c_str());
-			if ((access(boxArtPath, F_OK) != 0) && (bnrRomType[secondaryDevice] == 0)) {
+			std::string temp_filename = filename[1];
+			sprintf (boxArtPath[1], (sdFound() ? "sd:/_nds/TWiLightMenu/boxart/%s.png" : "fat:/_nds/TWiLightMenu/boxart/%s.png"), filename[0].c_str());
+			if ((access(boxArtPath[1], F_OK) != 0) && (bnrRomType[1] == 0)) {
 				if(extention(filename[0], ".argv")) {
 					vector<char*> argarray;
 
@@ -1319,16 +1412,19 @@ int main(int argc, char **argv) {
 				game_TID[4] = 0;
 				fclose(f_nds_file);
 
-				sprintf (boxArtPath, (sdFound() ? "sd:/_nds/TWiLightMenu/boxart/%s.png" : "fat:/_nds/TWiLightMenu/boxart/%s.png"), game_TID);
+				sprintf (boxArtPath[1], (sdFound() ? "sd:/_nds/TWiLightMenu/boxart/%s.png" : "fat:/_nds/TWiLightMenu/boxart/%s.png"), game_TID);
 			}
-			loadBoxArt(boxArtPath);	// Load box art
 		}
 	}
 
-	if (isDSiMode() && !flashcardFound()) {
+	if (showBoxArt && !slot1Launched) {
+		loadBoxArt(boxArtPath[previousUsedDevice]);	// Load box art
+	}
+
+	if (isDSiMode() && !flashcardFound() && slot1Launched) {
 		if (REG_SCFG_MC == 0x11) {
-			if (showBoxArt) loadBoxArt("nitro:/graphics/boxart_unknown.png");
 			cardEjected = true;
+			if (showBoxArt) loadBoxArt("nitro:/graphics/boxart_unknown.png");
 		} else {
 			refreshNdsCard();
 		}
@@ -1372,7 +1468,7 @@ int main(int argc, char **argv) {
 				if (isDSiMode() && !flashcardFound()) {
 					if (REG_SCFG_MC == 0x11) {
 						if (cardRefreshed && showBoxArt) {
-							loadBoxArt("nitro:/graphics/boxart_unknown.png");
+							loadBoxArt(slot1Launched ? "nitro:/graphics/boxart_unknown.png" : boxArtPath[previousUsedDevice]);
 						}
 						cardRefreshed = false;
 						cardEjected = true;
@@ -1946,10 +2042,10 @@ int main(int argc, char **argv) {
 					if (memcmp(io_dldi_data->friendlyName, "CycloDS iEvolution", 18) == 0) {
 						// Display nothing
 					} else if (consoleModel >= 2) {
-						printSmallCentered(false, 20, "If this takes a while, press HOME,");
+						printSmallCentered(false, 20, "If the bar stopped, press HOME,");
 						printSmallCentered(false, 34, "then press B.");
 					} else {
-						printSmallCentered(false, 20, "If this takes a while, close and open");
+						printSmallCentered(false, 20, "If the bar stopped, close and open");
 						printSmallCentered(false, 34, "the console's lid.");
 					}
 					printSmall(false, 2, 80, "Creating public save file...");
@@ -1983,10 +2079,10 @@ int main(int argc, char **argv) {
 					if (memcmp(io_dldi_data->friendlyName, "CycloDS iEvolution", 18) == 0) {
 						// Display nothing
 					} else if (consoleModel >= 2) {
-						printSmallCentered(false, 20, "If this takes a while, press HOME,");
+						printSmallCentered(false, 20, "If the bar stopped, press HOME,");
 						printSmallCentered(false, 34, "then press B.");
 					} else {
-						printSmallCentered(false, 20, "If this takes a while, close and open");
+						printSmallCentered(false, 20, "If the bar stopped, close and open");
 						printSmallCentered(false, 34, "the console's lid.");
 					}
 					printSmall(false, 2, 80, "Creating private save file...");
@@ -2078,7 +2174,7 @@ int main(int argc, char **argv) {
 
 				if (secondaryDevice) {
 					clearText();
-					printSmallCentered(false, 20, "If this takes a while, close and open");
+					printSmallCentered(false, 20, "If the bar stopped, close and open");
 					printSmallCentered(false, 34, "the console's lid.");
 					printSmallCentered(false, 86, "Now copying data...");
 					printSmallCentered(false, 100, "Do not turn off the power.");
@@ -2282,6 +2378,7 @@ int main(int argc, char **argv) {
 							bootstrapini.SetInt("NDS-BOOTSTRAP", "BOOST_CPU", perGameSettings_boostCpu == -1 ? boostCpu : perGameSettings_boostCpu);
 							bootstrapini.SetInt("NDS-BOOTSTRAP", "BOOST_VRAM", perGameSettings_boostVram == -1 ? boostVram : perGameSettings_boostVram);
 						}
+						bootstrapini.SetInt("NDS-BOOTSTRAP", "EXTENDED_MEMORY", perGameSettings_expandRomSpace == -1 ? bstrap_extendedMemory : perGameSettings_expandRomSpace);
 						bootstrapini.SetInt("NDS-BOOTSTRAP", "DONOR_SDK_VER", donorSdkVer);
 						bootstrapini.SetInt("NDS-BOOTSTRAP", "PATCH_MPU_REGION", mpuregion);
 						bootstrapini.SetInt("NDS-BOOTSTRAP", "PATCH_MPU_SIZE", mpusize);
@@ -2425,6 +2522,7 @@ int main(int argc, char **argv) {
 				const char *ndsToBoot = "sd:/_nds/nds-bootstrap-release.nds";
 				if (extention(filename[secondaryDevice], ".plg")) {
 					ndsToBoot = "fat:/_nds/TWiLightMenu/bootplg.srldr";
+					dsModeSwitch = true;
 
 					// Print .plg path without "fat:" at the beginning
 					char ROMpathDS2[256];
@@ -2458,9 +2556,83 @@ int main(int argc, char **argv) {
 						boostVram = true;
 					}
 				} else if (extention(filename[secondaryDevice], ".gba")) {
-					launchType[secondaryDevice] = 1;
+					launchType[secondaryDevice] = (showGba == 1) ? 11 : 1;
 
-					if (secondaryDevice) {
+					if (showGba == 1) {
+						clearText();
+						ClearBrightness();
+						printSmallCentered(false, 20, "If the bar stopped, close and open");
+						printSmallCentered(false, 34, "the console's lid.");
+						printSmallCentered(false, 88, "Now Loading...");
+
+						showProgressBar = true;
+						progressBarLength = 0;
+
+						u32 ptr = 0x08000000;
+						extern char copyBuf[0x8000];
+						u32 romSize = getFileSize(filename[secondaryDevice].c_str());
+						if (romSize > 0x2000000) romSize = 0x2000000;
+
+						bool nor = false;
+						if (*(u16*)(0x020000C0) == 0x5A45) {
+							cExpansion::SetRompage(0);
+							expansion().SetRampage(cExpansion::ENorPage);
+							cExpansion::OpenNorWrite();
+							cExpansion::SetSerialMode();
+							for(u32 address=0;address<romSize&&address<0x2000000;address+=0x40000)
+							{
+								expansion().Block_Erase(address);
+							}
+							nor = true;
+						} else if (*(u16*)(0x020000C0) == 0x4353 && romSize > 0x1FFFFFE) {
+							romSize = 0x1FFFFFE;
+						}
+
+						FILE* gbaFile = fopen(filename[secondaryDevice].c_str(), "rb");
+						for (u32 len = romSize; len > 0; len -= 0x8000) {
+							if (fread(&copyBuf, 1, (len>0x8000 ? 0x8000 : len), gbaFile) > 0) {
+								s2RamAccess(true);
+								if (nor) {
+									expansion().WriteNorFlash(ptr-0x08000000, (u8*)copyBuf, (len>0x8000 ? 0x8000 : len));
+								} else {
+									tonccpy((u16*)ptr, &copyBuf, (len>0x8000 ? 0x8000 : len));
+								}
+								s2RamAccess(false);
+								ptr += 0x8000;
+								progressBarLength = ((ptr-0x08000000)+0x8000)/(romSize/192);
+							} else {
+								break;
+							}
+						}
+						fclose(gbaFile);
+
+						if (*(u16*)(0x020000C0) == 0x5A45) {
+							expansion().SetRampage(0);	// Switch to GBA SRAM for EZ Flash
+						}
+
+						ptr = 0x0A000000;
+
+						std::string savename = replaceAll(filename[secondaryDevice], ".gba", ".sav");
+						u32 savesize = getFileSize(savename.c_str());
+						if (savesize > 0x10000) savesize = 0x10000;
+
+						if (savesize > 0) {
+							FILE* savFile = fopen(savename.c_str(), "rb");
+							for (u32 len = savesize; len > 0; len -= 0x8000) {
+								if (fread(&copyBuf, 1, (len>0x8000 ? 0x8000 : len), savFile) > 0) {
+									gbaSramAccess(true);	// Switch to GBA SRAM
+									cExpansion::WriteSram(ptr,(u8*)copyBuf,0x8000);
+									gbaSramAccess(false);	// Switch out of GBA SRAM
+									ptr += 0x8000;
+								} else {
+									break;
+								}
+							}
+							fclose(savFile);
+						}
+
+						ndsToBoot = "fat:/_nds/TWiLightMenu/gbapatcher.srldr";
+					} else if (secondaryDevice) {
 						ndsToBoot = gbar2DldiAccess ? "sd:/_nds/GBARunner2_arm7dldi_ds.nds" : "sd:/_nds/GBARunner2_arm9dldi_ds.nds";
 						if (REG_SCFG_EXT != 0) {
 							ndsToBoot = consoleModel>0 ? "sd:/_nds/GBARunner2_arm7dldi_3ds.nds" : "sd:/_nds/GBARunner2_arm7dldi_dsi.nds";
@@ -2499,6 +2671,14 @@ int main(int argc, char **argv) {
 					ndsToBoot = "sd:/_nds/TWiLightMenu/emulators/StellaDS.nds";
 					if(!isDSiMode() || access(ndsToBoot, F_OK) != 0) {
 						ndsToBoot = "fat:/_nds/TWiLightMenu/emulators/StellaDS.nds";
+						boostVram = true;
+					}
+				} else if (extention(filename[secondaryDevice], ".a78")) {
+					launchType[secondaryDevice] = 12;
+					
+					ndsToBoot = "sd:/_nds/TWiLightMenu/emulators/A7800DS.nds";
+					if(!isDSiMode() || access(ndsToBoot, F_OK) != 0) {
+						ndsToBoot = "fat:/_nds/TWiLightMenu/emulators/A7800DS.nds";
 						boostVram = true;
 					}
 				} else if (extention(filename[secondaryDevice], ".gb") || extention(filename[secondaryDevice], ".sgb") || extention(filename[secondaryDevice], ".gbc")) {

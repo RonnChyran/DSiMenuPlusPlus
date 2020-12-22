@@ -23,11 +23,14 @@ jobs:
           submodules: recursive
       - name: Install tools
         run: |
-          echo deb http://deb.debian.org/debian stable main contrib non-free >> /etc/apt/sources.list
           sudo apt-get update
-          sudo apt-get install chromium ffmpeg fonts-noto-cjk jq libxml2-utils p7zip-full python -y
-      - name: Build manual pages
-        run: make -C manual pages
+          sudo apt-get install jq p7zip-full python -y
+      - name: Get manual pages
+        run: |
+          cd manual/nitrofiles
+          curl -LO https://github.com/DS-Homebrew/twilight-manual/releases/download/pages/pages.7z
+          7z x pages.7z
+          rm pages.7z
       - name: Build TWiLightMenu++
         run: make package
       - name: Make booter and TWiLightMenu CIAs
@@ -36,13 +39,10 @@ jobs:
           cd booter/
           chmod +x make_cia
           ./make_cia --srl="booter.nds" --id_0=$(git rev-parse --short=7 HEAD) --tikID=$(git rev-parse --short=16 HEAD)
+          ./make_cia --srl="booter_rungame.nds" --id_0=$(git rev-parse --short=7 HEAD) --tikID=$(git rev-parse --short=16 HEAD)
           mkdir -p "../7zfile/3DS - CFW users/"
           cp "booter.cia" "../7zfile/3DS - CFW users/TWiLight Menu.cia"
-
-          cd ../rungame/
-          chmod +x make_cia
-          ./make_cia --srl="rungame.nds" --id_0=$(git rev-parse --short=7 HEAD) --tikID=$(git rev-parse --short=16 HEAD)
-          cp "rungame.cia" "../7zfile/3DS - CFW users/TWiLight Menu - Game booter.cia"
+          cp "booter_rungame.cia" "../7zfile/3DS - CFW users/TWiLight Menu - Game booter.cia"
 
           echo ::set-output name=commit_tag::$(git describe --abbrev=0 --tags)
           echo ::set-output name=commit_hash::$(git log --format=%h -1)
@@ -72,9 +72,10 @@ jobs:
           # nds-bootstrap
           mkdir -p nds-bootstrap
           cd nds-bootstrap
-          curl -LO https://github.com/DS-Homebrew/nds-bootstrap/releases/latest/download/nds-bootstrap.7z
-          7z x nds-bootstrap.7z
-          mv nds-bootstrap.* ..
+          # curl -LO https://github.com/DS-Homebrew/nds-bootstrap/releases/latest/download/nds-bootstrap.7z
+          curl -LO https://github.com/DS-Homebrew/nds-bootstrap/raw/master/nds-bootstrap-stealth.7z
+          7z x nds-bootstrap-stealth.7z
+          mv nds-bootstrap-stealth.* ..
           mkdir -p TWiLightMenu
           mv release-bootstrap.ver TWiLightMenu
           cd ..

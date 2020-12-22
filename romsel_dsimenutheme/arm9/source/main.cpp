@@ -1,6 +1,9 @@
-#include <maxmod9.h>
 #include <nds.h>
 #include <nds/arm9/dldi.h>
+#include "io_m3_common.h"
+#include "io_g6_common.h"
+#include "io_sc_common.h"
+#include "exptools.h"
 
 #include <fat.h>
 #include <limits.h>
@@ -8,6 +11,7 @@
 #include <sys/stat.h>
 
 #include <gl2d.h>
+#include <maxmod9.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -65,6 +69,8 @@ bool widescreenEffects = false;
 extern void ClearBrightness();
 extern bool displayGameIcons;
 extern bool showProgressIcon;
+extern bool showProgressBar;
+extern int progressBarLength;
 
 const char *settingsinipath = "sd:/_nds/TWiLightMenu/settings.ini";
 const char *bootstrapinipath = "sd:/_nds/nds-bootstrap.ini";
@@ -530,6 +536,48 @@ void dsCardLaunch() {
 	stop();
 }
 
+void s2RamAccess(bool open) {
+	if (io_dldi_data->ioInterface.features & FEATURE_SLOT_NDS) return;
+
+	if (open) {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode(M3_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation(G6_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode(SC_MODE_RAM);
+		}
+	} else {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode(M3_MODE_MEDIA);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation(G6_MODE_MEDIA);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode(SC_MODE_MEDIA);
+		}
+	}
+}
+
+void gbaSramAccess(bool open) {
+	if (open) {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode(M3_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation(G6_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode(SC_MODE_RAM_RO);
+		}
+	} else {
+		if (*(u16*)(0x020000C0) == 0x334D) {
+			_M3_changeMode((io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) ? M3_MODE_MEDIA : M3_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x3647) {
+			_G6_SelectOperation((io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) ? G6_MODE_MEDIA : G6_MODE_RAM);
+		} else if (*(u16*)(0x020000C0) == 0x4353) {
+			_SC_changeMode((io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) ? SC_MODE_MEDIA : SC_MODE_RAM);
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 	/*SetBrightness(0, 0);
 	SetBrightness(1, 0);
@@ -667,6 +715,14 @@ int main(int argc, char **argv) {
 			 "nand:/title/00030017/484E41%x/content/0000000%i.app", setRegion, ms().launcherApp);
 	}
 
+	if (ms().showGba == 1) {
+	  if (*(u16*)(0x020000C0) != 0) {
+		sysSetCartOwner(BUS_OWNER_ARM9); // Allow arm9 to access GBA ROM
+	  } else {
+		ms().showGba = 0;	// Hide GBA ROMs
+	  }
+	}
+
 	graphicsInit();
 	iconManagerInit();
 
@@ -688,11 +744,14 @@ int main(int argc, char **argv) {
 		extensionList.emplace_back(".rvid");
 		extensionList.emplace_back(".mp4");
 	}
-	if (ms().useGbarunner) {
+	if (ms().showGba) {
 		extensionList.emplace_back(".gba");
 	}
 	if (ms().showA26) {
 		extensionList.emplace_back(".a26");
+	}
+	if (ms().showA78) {
+		extensionList.emplace_back(".a78");
 	}
 	if (ms().showGb) {
 		extensionList.emplace_back(".gb");
@@ -723,36 +782,6 @@ int main(int argc, char **argv) {
 
 	char path[256] = {0};
 
-	if (flashcardFound()) {
-		// Move .sav back to "saves" folder
-		std::string filename = ms().romPath[true];
-		const size_t last_slash_idx = filename.find_last_of("/");
-		if (std::string::npos != last_slash_idx) {
-			filename.erase(0, last_slash_idx + 1);
-		}
-
-		loadPerGameSettings(filename);
-
-		const char *typeToReplace = ".nds";
-		if (extention(filename, ".dsi")) {
-			typeToReplace = ".dsi";
-		} else if (extention(filename, ".ids")) {
-			typeToReplace = ".ids";
-		} else if (extention(filename, ".srl")) {
-			typeToReplace = ".srl";
-		} else if (extention(filename, ".app")) {
-			typeToReplace = ".app";
-		}
-
-		std::string savename = replaceAll(filename, typeToReplace, getSavExtension());
-		std::string savenameFc = replaceAll(filename, typeToReplace, ".sav");
-		std::string romFolderNoSlash = ms().romfolder[true];
-		RemoveTrailingSlashes(romFolderNoSlash);
-		std::string savepath = romFolderNoSlash + "/saves/" + savename;
-		std::string savepathFc = romFolderNoSlash + "/" + savenameFc;
-		rename(savepathFc.c_str(), savepath.c_str());
-	}
-
 	//logPrint("snd()\n");
 	snd();
 
@@ -760,7 +789,7 @@ int main(int argc, char **argv) {
 		//logPrint("snd().playStartup()\n");
 		snd().playStartup();
 	} else if (ms().dsiMusic != 0) {
-		if ((ms().theme == 1 && ms().dsiMusic == 1) || ms().dsiMusic == 2 || (ms().dsiMusic == 3 && tc().playStartupJingle())) {
+		if ((ms().theme == 1 && ms().dsiMusic == 1) || (ms().dsiMusic == 3 && tc().playStartupJingle())) {
 			//logPrint("snd().playStartup()\n");
 			snd().playStartup();
 			//logPrint("snd().setStreamDelay(snd().getStartupSoundLength() - tc().startupJingleDelayAdjust())\n");
@@ -778,6 +807,7 @@ int main(int argc, char **argv) {
 		printSmall(false, 0, 20, STR_TAKEWHILE_CLOSELID, Alignment::center);
 		printLarge(false, 0, (ms().theme == 4 ? 80 : 88), STR_NOW_COPYING_DATA, Alignment::center);
 		printSmall(false, 0, (ms().theme == 4 ? 96 : 104), STR_DONOT_TURNOFF_POWER, Alignment::center);
+		updateText(false);
 		for (int i = 0; i < 15; i++) {
 			snd().updateStream();
 			swiWaitForVBlank();
@@ -803,6 +833,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		clearText();
+		updateText(false);
 	  }
 	}
 
@@ -909,11 +940,12 @@ int main(int argc, char **argv) {
 					if (memcmp(io_dldi_data->friendlyName, "CycloDS iEvolution", 18) == 0) {
 						// Display nothing
 					} else if (ms().consoleModel >= 2) {
-						printSmall(false, 0, 20, STR_TAKEWHILE_PRESSHOME, Alignment::center);
+						printSmall(false, 0, 20, STR_BARSTOPPED_PRESSHOME, Alignment::center);
 					} else {
-						printSmall(false, 0, 20, STR_TAKEWHILE_CLOSELID, Alignment::center);
+						printSmall(false, 0, 20, STR_BARSTOPPED_CLOSELID, Alignment::center);
 					}
 					printLarge(false, 0, (ms().theme == 4 ? 80 : 88), STR_CREATING_PUBLIC_SAVE, Alignment::center);
+					updateText(false);
 					if (ms().theme != 4 && !fadeType) {
 						fadeType = true; // Fade in from white
 						for (int i = 0; i < 35; i++) {
@@ -943,6 +975,7 @@ int main(int argc, char **argv) {
 					showProgressIcon = false;
 					clearText();
 					printLarge(false, 0, (ms().theme == 4 ? 32 : 88), STR_PUBLIC_SAVE_CREATED, Alignment::center);
+					updateText(false);
 					for (int i = 0; i < 60; i++) {
 						swiWaitForVBlank();
 					}
@@ -955,11 +988,12 @@ int main(int argc, char **argv) {
 					if (memcmp(io_dldi_data->friendlyName, "CycloDS iEvolution", 18) == 0) {
 						// Display nothing
 					} else if (ms().consoleModel >= 2) {
-						printSmall(false, 0, 20, STR_TAKEWHILE_PRESSHOME, Alignment::center);
+						printSmall(false, 0, 20, STR_BARSTOPPED_PRESSHOME, Alignment::center);
 					} else {
-						printSmall(false, 0, 20, STR_TAKEWHILE_CLOSELID, Alignment::center);
+						printSmall(false, 0, 20, STR_BARSTOPPED_CLOSELID, Alignment::center);
 					}
 					printLarge(false, 0, (ms().theme == 4 ? 80 : 88), STR_CREATING_PRIVATE_SAVE, Alignment::center);
+					updateText(false);
 					if (ms().theme != 4 && !fadeType) {
 						fadeType = true; // Fade in from white
 						for (int i = 0; i < 35; i++) {
@@ -989,6 +1023,7 @@ int main(int argc, char **argv) {
 					showProgressIcon = false;
 					clearText();
 					printLarge(false, 0, (ms().theme == 4 ? 32 : 88), STR_PRIVATE_SAVE_CREATED, Alignment::center);
+					updateText(false);
 					for (int i = 0; i < 60; i++) {
 						swiWaitForVBlank();
 					}
@@ -1064,6 +1099,7 @@ int main(int argc, char **argv) {
 						printLarge(false, 4, 20, useNightly ? STR_BOOTSTRAP_NIGHTLY_NOT_FOUND : STR_BOOTSTRAP_RELEASE_NOT_FOUND);
 					}
 					printSmall(false, 4, 20 + calcLargeFontHeight(useNightly ? STR_BOOTSTRAP_NIGHTLY_NOT_FOUND : STR_BOOTSTRAP_RELEASE_NOT_FOUND), STR_PRESS_B_RETURN);
+					updateText(false);
 					int pressed = 0;
 					do {
 						scanKeys();
@@ -1086,9 +1122,10 @@ int main(int argc, char **argv) {
 
 				if (ms().secondaryDevice) {
 					clearText();
-					printSmall(false, 0, 20, STR_TAKEWHILE_CLOSELID, Alignment::center);
+					printSmall(false, 0, 20, STR_BARSTOPPED_CLOSELID, Alignment::center);
 					printLarge(false, 0, (ms().theme == 4 ? 80 : 88), STR_NOW_COPYING_DATA, Alignment::center);
 					printSmall(false, 0, (ms().theme == 4 ? 96 : 104), STR_DONOT_TURNOFF_POWER, Alignment::center);
+					updateText(false);
 					if (ms().theme != 4) {
 						fadeType = true; // Fade in from white
 						for (int i = 0; i < 35; i++) {
@@ -1117,6 +1154,7 @@ int main(int argc, char **argv) {
 					 || (access(ms().dsiWarePrvPath.c_str(), F_OK) == 0 && (NDSHeader.prvSavSize > 0))) {
 						clearText();
 						printLarge(false, 0, ms().theme == 4 ? 16 : 72, STR_RESTART_AFTER_SAVING, Alignment::center);
+						updateText(false);
 						if (ms().theme != 4) {
 							fadeType = true; // Fade in from white
 						}
@@ -1275,6 +1313,7 @@ int main(int argc, char **argv) {
 									printSmall(false, 0, 20, STR_TAKEWHILE_CLOSELID, Alignment::center);
 								}
 								printLarge(false, 0, (ms().theme == 4 ? 80 : 88), (orgsavesize == 0) ? STR_CREATING_SAVE : STR_EXPANDING_SAVE, Alignment::center);
+								updateText(false);
 
 								if (ms().theme != 4 && ms().theme != 5) {
 									fadeSpeed = true; // Fast fading
@@ -1295,6 +1334,7 @@ int main(int argc, char **argv) {
 								showProgressIcon = false;
 								clearText();
 								printLarge(false, 0, (ms().theme == 4 ? 32 : 88), (orgsavesize == 0) ? STR_SAVE_CREATED : STR_SAVE_EXPANDED, Alignment::center);
+								updateText(false);
 								for (int i = 0; i < 30; i++) {
 									swiWaitForVBlank();
 								}
@@ -1305,6 +1345,7 @@ int main(int argc, char **argv) {
 									}
 								}
 								clearText();
+								updateText(false);
 								if (ms().theme == 5) displayGameIcons = true;
 							}
 						}
@@ -1332,6 +1373,7 @@ int main(int argc, char **argv) {
 							bootstrapini.SetInt("NDS-BOOTSTRAP", "BOOST_CPU", perGameSettings_boostCpu == -1 ? ms().boostCpu : perGameSettings_boostCpu);
 							bootstrapini.SetInt("NDS-BOOTSTRAP", "BOOST_VRAM", perGameSettings_boostVram == -1 ? ms().boostVram : perGameSettings_boostVram);
 						}
+						bootstrapini.SetInt("NDS-BOOTSTRAP", "EXTENDED_MEMORY", perGameSettings_expandRomSpace == -1 ? ms().extendedMemory : perGameSettings_expandRomSpace);
 						bootstrapini.SetInt("NDS-BOOTSTRAP", "DONOR_SDK_VER", donorSdkVer);
 						bootstrapini.SetInt("NDS-BOOTSTRAP", "PATCH_MPU_REGION", mpuregion);
 						bootstrapini.SetInt("NDS-BOOTSTRAP", "PATCH_MPU_SIZE", mpusize);
@@ -1425,13 +1467,14 @@ int main(int argc, char **argv) {
 						char text[64];
 						snprintf(text, sizeof(text), STR_START_FAILED_ERROR.c_str(), err);
 						clearText();
-						fadeSpeed = true;
-						fadeType = true;
 						printLarge(false, 4, 4, text);
 						if (err == 1) {
 							printLarge(false, 4, 20, useNightly ? STR_BOOTSTRAP_NIGHTLY_NOT_FOUND : STR_BOOTSTRAP_RELEASE_NOT_FOUND);
 						}
 						printSmall(false, 4, 20 + calcLargeFontHeight(useNightly ? STR_BOOTSTRAP_NIGHTLY_NOT_FOUND : STR_BOOTSTRAP_RELEASE_NOT_FOUND), STR_PRESS_B_RETURN);
+						updateText(false);
+						fadeSpeed = true;
+						fadeType = true;
 						int pressed = 0;
 						do {
 							scanKeys();
@@ -1506,10 +1549,11 @@ int main(int argc, char **argv) {
 					int err = runNdsFile(argarray[0], argarray.size(), (const char **)&argarray[0], true, true, dsModeSwitch, runNds_boostCpu, runNds_boostVram);
 					char text[64];
 					snprintf(text, sizeof(text), STR_START_FAILED_ERROR.c_str(), err);
-					fadeSpeed = true;
-					fadeType = true;
 					printLarge(false, 4, 4, text);
 					printSmall(false, 4, 20, STR_PRESS_B_RETURN);
+					updateText(false);
+					fadeSpeed = true;
+					fadeType = true;
 					int pressed = 0;
 					do {
 						scanKeys();
@@ -1546,6 +1590,7 @@ int main(int argc, char **argv) {
 				const char *ndsToBoot = "sd:/_nds/nds-bootstrap-release.nds";
 				if (extention(filename, ".plg")) {
 					ndsToBoot = "fat:/_nds/TWiLightMenu/bootplg.srldr";
+					dsModeSwitch = true;
 
 					// Print .plg path without "fat:" at the beginning
 					char ROMpathDS2[256];
@@ -1579,9 +1624,98 @@ int main(int argc, char **argv) {
 						boostVram = true;
 					}
 				} else if (extention(filename, ".gba")) {
-					ms().launchType[ms().secondaryDevice] = Launch::ESDFlashcardLaunch;
+					ms().launchType[ms().secondaryDevice] = (ms().showGba == 1) ? Launch::EGBANativeLaunch : Launch::ESDFlashcardLaunch;
 
-					if (ms().secondaryDevice) {
+					if (ms().showGba == 1) {
+						if (ms().theme == 5) displayGameIcons = false;
+						printSmall(false, 0, 20, STR_BARSTOPPED_CLOSELID, Alignment::center);
+						printLarge(false, 0, (ms().theme == 4 ? 80 : 88), STR_NOW_LOADING, Alignment::center);
+						updateText(false);
+
+						if (ms().theme != 4 && ms().theme != 5) {
+							fadeSpeed = true; // Fast fading
+							fadeType = true; // Fade in from white
+						}
+						showProgressIcon = true;
+						showProgressBar = true;
+						progressBarLength = 0;
+
+						u32 ptr = 0x08000000;
+						extern char copyBuf[0x8000];
+						u32 romSize = getFileSize(filename.c_str());
+						if (romSize > 0x2000000) romSize = 0x2000000;
+
+						bool nor = false;
+						if (*(u16*)(0x020000C0) == 0x5A45) {
+							cExpansion::SetRompage(0);
+							expansion().SetRampage(cExpansion::ENorPage);
+							cExpansion::OpenNorWrite();
+							cExpansion::SetSerialMode();
+							for(u32 address=0;address<romSize&&address<0x2000000;address+=0x40000)
+							{
+								expansion().Block_Erase(address);
+							}
+							nor = true;
+						} else if (*(u16*)(0x020000C0) == 0x4353 && romSize > 0x1FFFFFE) {
+							romSize = 0x1FFFFFE;
+						}
+
+						FILE* gbaFile = fopen(filename.c_str(), "rb");
+						for (u32 len = romSize; len > 0; len -= 0x8000) {
+							if (fread(&copyBuf, 1, (len>0x8000 ? 0x8000 : len), gbaFile) > 0) {
+								s2RamAccess(true);
+								if (nor) {
+									expansion().WriteNorFlash(ptr-0x08000000, (u8*)copyBuf, (len>0x8000 ? 0x8000 : len));
+								} else {
+									tonccpy((u16*)ptr, &copyBuf, (len>0x8000 ? 0x8000 : len));
+								}
+								s2RamAccess(false);
+								ptr += 0x8000;
+								progressBarLength = ((ptr-0x08000000)+0x8000)/(romSize/192);
+							} else {
+								break;
+							}
+						}
+						fclose(gbaFile);
+
+						if (*(u16*)(0x020000C0) == 0x5A45) {
+							expansion().SetRampage(0);	// Switch to GBA SRAM for EZ Flash
+						}
+
+						ptr = 0x0A000000;
+
+						std::string savename = replaceAll(filename, ".gba", ".sav");
+						u32 savesize = getFileSize(savename.c_str());
+						if (savesize > 0x10000) savesize = 0x10000;
+
+						if (savesize > 0) {
+							FILE* savFile = fopen(savename.c_str(), "rb");
+							for (u32 len = savesize; len > 0; len -= 0x8000) {
+								if (fread(&copyBuf, 1, (len>0x8000 ? 0x8000 : len), savFile) > 0) {
+									gbaSramAccess(true);	// Switch to GBA SRAM
+									cExpansion::WriteSram(ptr,(u8*)copyBuf,0x8000);
+									gbaSramAccess(false);	// Switch out of GBA SRAM
+									ptr += 0x8000;
+								} else {
+									break;
+								}
+							}
+							fclose(savFile);
+						}
+
+						showProgressIcon = false;
+						if (ms().theme != 4 && ms().theme != 5) {
+							fadeType = false;	   // Fade to white
+							for (int i = 0; i < 25; i++) {
+								swiWaitForVBlank();
+							}
+						}
+						clearText();
+						updateText(false);
+						if (ms().theme == 5) displayGameIcons = true;
+
+						ndsToBoot = "fat:/_nds/TWiLightMenu/gbapatcher.srldr";
+					} else if (ms().secondaryDevice) {
 						ndsToBoot = ms().gbar2DldiAccess ? "sd:/_nds/GBARunner2_arm7dldi_ds.nds" : "sd:/_nds/GBARunner2_arm9dldi_ds.nds";
 						if (REG_SCFG_EXT != 0) {
 							ndsToBoot = ms().consoleModel > 0 ? "sd:/_nds/GBARunner2_arm7dldi_3ds.nds" : "sd:/_nds/GBARunner2_arm7dldi_dsi.nds";
@@ -1620,6 +1754,14 @@ int main(int argc, char **argv) {
 					ndsToBoot = "sd:/_nds/TWiLightMenu/emulators/StellaDS.nds";
 					if(!isDSiMode() || access(ndsToBoot, F_OK) != 0) {
 						ndsToBoot = "fat:/_nds/TWiLightMenu/emulators/StellaDS.nds";
+						boostVram = true;
+					}
+				} else if (extention(filename, ".a78")) {
+					ms().launchType[ms().secondaryDevice] = Launch::EA7800DSLaunch;
+
+					ndsToBoot = "sd:/_nds/TWiLightMenu/emulators/A7800DS.nds";
+					if(!isDSiMode() || access(ndsToBoot, F_OK) != 0) {
+						ndsToBoot = "fat:/_nds/TWiLightMenu/emulators/A7800DS.nds";
 						boostVram = true;
 					}
 				} else if (extention(filename, ".gb") || extention(filename, ".sgb") || extention(filename, ".gbc")) {
@@ -1765,13 +1907,14 @@ int main(int argc, char **argv) {
 
 				char text[64];
 				snprintf(text, sizeof(text), STR_START_FAILED_ERROR.c_str(), err);
-				fadeSpeed = true;
-				fadeType = true;
 				printLarge(false, 4, 4, text);
 				if (err == 1 && useNDSB) {
 					printLarge(false, 4, 20, ms().bootstrapFile ? STR_BOOTSTRAP_NIGHTLY_NOT_FOUND : STR_BOOTSTRAP_RELEASE_NOT_FOUND);
 				}
 				printSmall(false, 4, 20 + calcLargeFontHeight(ms().bootstrapFile ? STR_BOOTSTRAP_NIGHTLY_NOT_FOUND : STR_BOOTSTRAP_RELEASE_NOT_FOUND), STR_PRESS_B_RETURN);
+				updateText(false);
+				fadeSpeed = true;
+				fadeType = true;
 				int pressed = 0;
 				do {
 					scanKeys();

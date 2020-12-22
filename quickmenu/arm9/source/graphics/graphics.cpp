@@ -74,6 +74,9 @@ int frameDelay = 0;
 bool frameDelayEven = true; // For 24FPS
 bool renderFrame = true;
 
+bool showProgressBar = false;
+int progressBarLength = 0;
+
 extern int spawnedtitleboxes;
 
 extern bool showCursor;
@@ -114,7 +117,8 @@ glImage gbaIconImage[(32 / 32) * (32 / 32)];
 glImage cornerIcons[(32 / 32) * (128 / 32)];
 glImage settingsIconImage[(32 / 32) * (32 / 32)];
 
-u16 bmpImageBuffer[256*192];
+u16 bmpImageBuffer[256*192] = {0};
+u16 topImageBuffer[256*192] = {0};
 
 void vramcpy_ui (void* dest, const void* src, int size) 
 {
@@ -371,6 +375,8 @@ void vBlankHandler()
 				if (isDSiMode() && !flashcardFound() && arm7SCFGLocked) {
 					glSprite(40, iconYpos[0]+6, GL_FLIP_NONE, &dscardIconImage[0]);
 				}
+				else if (bnrRomType[1] == 11) drawIconPCE(40, iconYpos[0]+6);
+				else if (bnrRomType[1] == 10) drawIconA26(40, iconYpos[0]+6);
 				else if (bnrRomType[1] == 9) drawIconPlg(40, iconYpos[0]+6);
 				else if (bnrRomType[1] == 8) drawIconSNES(40, iconYpos[0]+6);
 				else if (bnrRomType[1] == 7) drawIconMD(40, iconYpos[0]+6);
@@ -391,6 +397,8 @@ void vBlankHandler()
 			glSprite(129, iconYpos[2], GL_FLIP_NONE, &pictodlpImage[3-dlplayFound]);
 			glSprite(33, iconYpos[3], GL_FLIP_NONE, sdFound() ? &iconboxImage[0] : &iconboxImage[1-isRegularDS]);
 			if (!sdFound()) drawIconGBA(40, iconYpos[3]+6);
+			else if (bnrRomType[0] == 11) drawIconPCE(40, iconYpos[3]+6);
+			else if (bnrRomType[0] == 10) drawIconA26(40, iconYpos[3]+6);
 			else if (bnrRomType[0] == 9) drawIconPlg(40, iconYpos[3]+6);
 			else if (bnrRomType[0] == 8) drawIconSNES(40, iconYpos[3]+6);
 			else if (bnrRomType[0] == 7) drawIconMD(40, iconYpos[3]+6);
@@ -468,6 +476,14 @@ void vBlankHandler()
 		}
 		if (whiteScreen) {
 			glBoxFilled(0, 0, 256, 192, RGB15(31, 31, 31));
+			if (showProgressBar) {
+				int barXpos = 31;
+				int barYpos = 169;
+				glBoxFilled(barXpos, barYpos, barXpos+192, barYpos+5, RGB15(23, 23, 23));
+				if (progressBarLength > 0) {
+					glBoxFilled(barXpos, barYpos, barXpos+progressBarLength, barYpos+5, RGB15(0, 0, 31));
+				}
+			}
 		}
 		updateText(false);
 	  }
@@ -511,9 +527,22 @@ void loadBoxArt(const char* filename) {
 		}
 	}
 
+	// Re-load top BG (excluding top bar)
+	u16* src = topImageBuffer+(256*16);
+	int x = 0;
+	int y = 16;
+	for (int i=256*16; i<256*192; i++) {
+		if (x >= 256) {
+			x = 0;
+			y++;
+		}
+		BG_GFX_SUB[y*256+x] = *(src++);
+		x++;
+	}
+
 	imageXpos = (256-imageWidth)/2;
 	imageYpos = (192-imageHeight)/2;
-	u16 *src = bmpImageBuffer;
+	src = bmpImageBuffer;
 	for(uint y = 0; y < imageHeight; y++) {
 		for(uint x = 0; x < imageWidth; x++) {
 			BG_GFX_SUB[(y+imageYpos) * 256 + imageXpos + x] = *(src++);
@@ -555,11 +584,11 @@ void topBgLoad(void) {
 	if(imageWidth > 256 || imageHeight > 192)	return;
 
 	for(uint i=0;i<image.size()/4;i++) {
-		bmpImageBuffer[i] = image[i*4]>>3 | (image[(i*4)+1]>>3)<<5 | (image[(i*4)+2]>>3)<<10 | BIT(15);
+		topImageBuffer[i] = image[i*4]>>3 | (image[(i*4)+1]>>3)<<5 | (image[(i*4)+2]>>3)<<10 | BIT(15);
 	}
 
 	// Start loading
-	u16* src = bmpImageBuffer;
+	u16* src = topImageBuffer;
 	int x = 0;
 	int y = 0;
 	for (int i=0; i<256*192; i++) {

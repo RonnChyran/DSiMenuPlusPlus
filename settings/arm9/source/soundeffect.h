@@ -13,7 +13,6 @@ class SoundEffect
   public:
     SoundEffect(): music(false) {
         music = false;
-        counter = 0;
     }
     ~SoundEffect() {}
 
@@ -30,7 +29,6 @@ class SoundEffect
         mmLoadEffect(SFX_BACK);
         mmLoadEffect(SFX_SATURNBACK);
         mmLoadEffect(SFX_SWITCH);
-        mmLoadEffect(SFX_SETTINGS);
 
         snd_launch = {
             {SFX_LAUNCH},            // id
@@ -95,47 +93,55 @@ class SoundEffect
             255,                     // volume
             128,                     // panning
         };
-        mus_settings = {
-            {SFX_SETTINGS},          // id
-            (int)(1.0f * (1 << 10)), // rate
-            0,                       // handle
-            255,                     // volume
-            128,                     // panning
-        };
     }
 
-    void playBgMusic()
+    void playBgMusic(int settingsMusic)
     {
-        if (!music)
-        {
-            music = true;
-            mmEffectEx(&mus_settings); // Play settings music
-        }
-    }
+        if (music) return;
+		music = true;
 
-    void tickBgMusic()
-    {
-        if (music)
-        {
-            counter++;
-            if (counter >= 60 * 25)
-            { // Length of music file in seconds (60*ss)
-                mmEffectEx(&mus_settings);
-                counter = 0;
-            }
-        }
+		if (settingsMusic == -1) {
+			extern int currentTheme;
+			switch (currentTheme) {
+				case 0:
+				case 2:
+				case 3:
+					settingsMusic = 1;
+					break;
+				case 4:
+					settingsMusic = 0;	// Do not play music if using SEGA Saturn theme
+					break;
+				case 1:
+				case 5:
+					settingsMusic = 2;
+					break;
+			}
+		}
+		if (settingsMusic == 0) {
+			return;
+		}
+		// Play settings music
+		if (settingsMusic == 2) {
+			mmLoad(MOD_SETTINGS3D);
+			mmSetModuleVolume(1000);
+			mmStart(MOD_SETTINGS3D, MM_PLAY_LOOP);
+		} else {
+			mmLoad(MOD_SETTINGS);
+			mmSetModuleVolume(500);
+			mmSetModuleTempo(1900);
+			mmStart(MOD_SETTINGS, MM_PLAY_LOOP);
+		}
     }
 
     void stopBgMusic()
     {
-        if (music) {
-			fifoSendValue32(FIFO_USER_01, 1); // Fade out sound
-			for (int i = 0; i < 25; i++)
-				swiWaitForVBlank();
-			mmEffectCancelAll();
-			fifoSendValue32(FIFO_USER_01, 0); // Cancel sound fade out
-        }
-        music = false;
+        if (!mmActive()) return;
+
+		fifoSendValue32(FIFO_USER_01, 1); // Fade out sound
+		for (int i = 0; i < 25; i++)
+			swiWaitForVBlank();
+		mmStop();
+		fifoSendValue32(FIFO_USER_01, 0); // Cancel sound fade out
     }
 
     mm_sound_effect snd_launch;
@@ -147,11 +153,9 @@ class SoundEffect
     mm_sound_effect snd_back;
     mm_sound_effect snd_saturn_back;
     mm_sound_effect snd_switch;
-    mm_sound_effect mus_settings;
 
   private:
     bool music;
-    int counter;
 };
 
 typedef singleton<SoundEffect>

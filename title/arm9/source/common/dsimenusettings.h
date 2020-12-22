@@ -97,7 +97,9 @@ class TWLSettings
         ERVideoLaunch = 7,
         EMPEG4Launch = 8,
         EStellaDSLaunch = 9,
-        EPicoDriveTWLLaunch = 10
+        EPicoDriveTWLLaunch = 10,
+		EGBANativeLaunch = 11,
+        EA7800DSLaunch = 12
     };
 
     /*	0 = Nintendo DSi (Retail)
@@ -136,6 +138,7 @@ class TWLSettings
     bool showMainMenu;
     int theme;
     int subtheme;
+	int showGba;
     int showMd;
     bool showDirectories;
     int showBoxArt;
@@ -178,6 +181,7 @@ class TWLSettings
     bool homebrewHasWide;
     bool soundfreq;
     int dsiSplash;
+	int nintendoLogoColor;
     bool showlogo;
     std::string r4_theme;// unused...
     std::string unlaunchBg;

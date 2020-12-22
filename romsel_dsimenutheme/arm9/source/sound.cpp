@@ -61,13 +61,11 @@ SoundControl::SoundControl()
 		soundbank_file = fopen(std::string(TFN_SATURN_SOUND_EFFECTBANK).c_str(), "rb");
 	} else {
 		switch(ms().dsiMusic) {
-			case 2:
-				soundbank_file = fopen(std::string(TFN_SHOP_SOUND_EFFECTBANK).c_str(), "rb");
-				break;
 			case 3:
 				soundbank_file = fopen(std::string(TFN_SOUND_EFFECTBANK).c_str(), "rb");
 				if (soundbank_file) break; // fallthrough if soundbank_file fails.
 			case 1:
+			case 2:
 			default:
 				soundbank_file = fopen(std::string(TFN_DEFAULT_SOUND_EFFECTBANK).c_str(), "rb");
 				break;
@@ -151,7 +149,10 @@ SoundControl::SoundControl()
 	};
 
 
-	bool isDSi = (isDSiMode() || REG_SCFG_EXT != 0);
+	if (ms().dsiMusic == 0 || ms().theme == 4) {
+		return;
+	}
+
 	bool loopableMusic = false;
 
 	stream.sampling_rate = 16000;	 		// 16000Hz
@@ -161,18 +162,19 @@ SoundControl::SoundControl()
 	} else {
 		switch(ms().dsiMusic) {
 			case 5:
-				if (isDSi) {
-					stream.sampling_rate = 22050;	 		// 22050Hz
-				}
-				stream_start_source = fopen(std::string(isDSi ? TFN_HBL_START_SOUND_BG : TFN_HBL_START_DS_SOUND_BG).c_str(), "rb");
-				stream_source = fopen(std::string(isDSi ? TFN_HBL_LOOP_SOUND_BG : TFN_HBL_LOOP_DS_SOUND_BG).c_str(), "rb");
+				stream.sampling_rate = 22050;	 		// 22050Hz
+				stream_start_source = fopen(std::string(TFN_HBL_START_SOUND_BG).c_str(), "rb");
+				stream_source = fopen(std::string(TFN_HBL_LOOP_SOUND_BG).c_str(), "rb");
 				loopableMusic = true;
 				break;
 			case 4:
 				stream_source = fopen(std::string(TFN_CLASSIC_SOUND_BG).c_str(), "rb");
 				break;
 			case 2:
-				stream_source = fopen(std::string(TFN_SHOP_SOUND_BG).c_str(), "rb");
+				stream.sampling_rate = 22050;	 		// 22050Hz
+				stream_start_source = fopen(std::string(TFN_SHOP_START_SOUND_BG).c_str(), "rb");
+				stream_source = fopen(std::string(TFN_SHOP_LOOP_SOUND_BG).c_str(), "rb");
+				loopableMusic = true;
 				break;
 			case 3:
 				stream_source = fopen(std::string(TFN_SOUND_BG).c_str(), "rb");
@@ -183,16 +185,16 @@ SoundControl::SoundControl()
 				break;
 		}
 	}
-	
+
 
 	fseek(stream_source, 0, SEEK_SET);
 
-	stream.buffer_length = (isDSi ? 0x1000 : 800);	  			// should be adequate
+	stream.buffer_length = 0x1000;	  			// should be adequate
 	stream.callback = on_stream_request;    
 	stream.format = MM_STREAM_16BIT_MONO;  // select format
 	stream.timer = MM_TIMER0;	    	   // use timer0
 	stream.manual = false;	      		   // auto filling
-	
+
 	if (loopableMusic) {
 		fseek(stream_start_source, 0, SEEK_END);
 		size_t fileSize = ftell(stream_start_source);

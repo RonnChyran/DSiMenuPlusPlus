@@ -98,6 +98,8 @@
 #define TFN_GRF_ICON_SMS            TFN_UI_DIRECTORY"/grf/icon_sms.grf"
 #define TFN_GRF_ICON_SNES           TFN_UI_DIRECTORY"/grf/icon_snes.grf"
 #define TFN_GRF_ICON_PLG            TFN_UI_DIRECTORY"/grf/icon_plg.grf"
+#define TFN_GRF_ICON_A26            TFN_UI_DIRECTORY"/grf/icon_a26.grf"
+#define TFN_GRF_ICON_PCE            TFN_UI_DIRECTORY"/grf/icon_pce.grf"
 #define TFN_GRF_ICON_UNK            TFN_UI_DIRECTORY"/grf/icon_unk.grf"
 #define TFN_GRF_LAUNCH_DOT          TFN_UI_DIRECTORY"/grf/launch_dot.grf"
 #define TFN_GRF_MOVING_ARROW        TFN_UI_DIRECTORY"/grf/moving_arrow.grf"
@@ -121,8 +123,8 @@
 #define TFN_DEFAULT_SOUND_EFFECTBANK      TFN_SYSTEM_SOUND_DIRECTORY"/defaultfx.bin"
 #define TFN_DEFAULT_SOUND_BG              TFN_SYSTEM_SOUND_DIRECTORY"/defaultbg.pcm.raw"
 
-#define TFN_SHOP_SOUND_EFFECTBANK         TFN_SYSTEM_SOUND_DIRECTORY"/shopfx.bin"
-#define TFN_SHOP_SOUND_BG                 TFN_SYSTEM_SOUND_DIRECTORY"/shopbg.pcm.raw"
+#define TFN_SHOP_START_SOUND_BG           TFN_SYSTEM_SOUND_DIRECTORY"/shopbg.start.raw"
+#define TFN_SHOP_LOOP_SOUND_BG            TFN_SYSTEM_SOUND_DIRECTORY"/shopbg.loop.raw"
 
 #define TFN_CLASSIC_SOUND_BG              TFN_SYSTEM_SOUND_DIRECTORY"/classicbg.pcm.raw"
 
@@ -192,6 +194,8 @@
 #define TFN_FALLBACK_GRF_ICON_SMS            TFN_FALLBACK_UI_DIRECTORY"/grf/icon_sms.grf"
 #define TFN_FALLBACK_GRF_ICON_SNES           TFN_FALLBACK_UI_DIRECTORY"/grf/icon_snes.grf"
 #define TFN_FALLBACK_GRF_ICON_PLG            TFN_FALLBACK_UI_DIRECTORY"/grf/icon_plg.grf"
+#define TFN_FALLBACK_GRF_ICON_A26            TFN_FALLBACK_UI_DIRECTORY"/grf/icon_a26.grf"
+#define TFN_FALLBACK_GRF_ICON_PCE            TFN_FALLBACK_UI_DIRECTORY"/grf/icon_pce.grf"
 #define TFN_FALLBACK_GRF_ICON_UNK            TFN_FALLBACK_UI_DIRECTORY"/grf/icon_unk.grf"
 #define TFN_FALLBACK_GRF_LAUNCH_DOT          TFN_FALLBACK_UI_DIRECTORY"/grf/launch_dot.grf"
 #define TFN_FALLBACK_GRF_MOVING_ARROW        TFN_FALLBACK_UI_DIRECTORY"/grf/moving_arrow.grf"

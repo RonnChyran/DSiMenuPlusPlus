@@ -173,6 +173,8 @@ bool extention(const std::string& filename, const char* ext) {
 	}
 }
 
+std::vector<char*> argarray;
+
 TWL_CODE int lastRunROM() {
 	LoadSettings();
 
@@ -196,13 +198,13 @@ TWL_CODE int lastRunROM() {
 		}
 	}*/
 
-	vector<char*> argarray;
-	if (launchType[secondaryDevice] > 3) {
-		argarray.push_back(strdup("null"));
-		argarray.push_back(strdup(homebrewArg[secondaryDevice].c_str()));
+	argarray.push_back(strdup("null"));
+
+	if (launchType[previousUsedDevice] > 3) {
+		argarray.push_back(strdup(homebrewArg[previousUsedDevice].c_str()));
 	}
 
-	if (access(romPath[secondaryDevice].c_str(), F_OK) != 0 || launchType[secondaryDevice] == 0) {
+	if (access(romPath[previousUsedDevice].c_str(), F_OK) != 0 || launchType[previousUsedDevice] == 0) {
 		return runNdsFile ("/_nds/TWiLightMenu/main.srldr", 0, NULL, true, false, false, true, true);	// Skip to running TWiLight Menu++
 	}
 
@@ -228,8 +230,6 @@ TWL_CODE int lastRunROM() {
 				{
 					filename.erase(0, last_slash_idx + 1);
 				}
-
-				argarray.push_back(strdup(filename.c_str()));
 
 				loadPerGameSettings(filename);
 				bool useNightly = (perGameSettings_bootstrapFile == -1 ? bootstrapFile : perGameSettings_bootstrapFile);
@@ -302,9 +302,9 @@ TWL_CODE int lastRunROM() {
 				}
 
 				argarray.at(0) = (char *)ndsToBoot;
-				if (secondaryDevice || !homebrewBootstrap) {
+				if (previousUsedDevice || !homebrewBootstrap) {
 					CIniFile bootstrapini(bootstrapinipath);
-					bootstrapini.SetString("NDS-BOOTSTRAP", "NDS_PATH", romPath[secondaryDevice]);
+					bootstrapini.SetString("NDS-BOOTSTRAP", "NDS_PATH", romPath[previousUsedDevice]);
 					bootstrapini.SetString("NDS-BOOTSTRAP", "SAV_PATH", savepath);
 					bootstrapini.SetInt("NDS-BOOTSTRAP", "LANGUAGE", perGameSettings_language == -2 ? gameLanguage : perGameSettings_language);
 					bootstrapini.SetInt("NDS-BOOTSTRAP", "DSI_MODE", perGameSettings_dsiMode == -1 ? bstrap_dsiMode : perGameSettings_dsiMode);
@@ -357,20 +357,20 @@ TWL_CODE int lastRunROM() {
 				}
 			}
 		case 2: {
-			romfolder = romPath[secondaryDevice];
+			romfolder = romPath[previousUsedDevice];
 			while (!romfolder.empty() && romfolder[romfolder.size()-1] != '/') {
 				romfolder.resize(romfolder.size()-1);
 			}
 			chdir(romfolder.c_str());
 
-			filename = romPath[secondaryDevice];
+			filename = romPath[previousUsedDevice];
 			const size_t last_slash_idx = filename.find_last_of("/");
 			if (std::string::npos != last_slash_idx)
 			{
 				filename.erase(0, last_slash_idx + 1);
 			}
 
-			argarray.push_back((char*)romPath[secondaryDevice].c_str());
+			argarray.at(0) = (char*)romPath[previousUsedDevice].c_str();
 
 			loadPerGameSettings(filename);
 
@@ -461,6 +461,10 @@ int main(int argc, char **argv) {
 	}
 
 	flashcardInit();
+
+	if (!flashcardFound()) {
+		disableSlot1();
+	}
 
 	fifoWaitValue32(FIFO_USER_06);
 

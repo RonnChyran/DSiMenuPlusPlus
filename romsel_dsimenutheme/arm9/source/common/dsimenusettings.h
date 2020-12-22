@@ -108,7 +108,9 @@ public:
 		ERVideoLaunch = 7,
 		EMPEG4Launch = 8,
 		EStellaDSLaunch = 9,
-		EPicoDriveTWLLaunch = 10
+		EPicoDriveTWLLaunch = 10,
+		EGBANativeLaunch = 11,
+        EA7800DSLaunch = 12
 	};
 
 	/*
@@ -156,15 +158,17 @@ public:
 	int blfLevel;
 	bool sdRemoveDetect;
 	bool showMicroSd;
-	bool useGbarunner;
 	bool gbar2DldiAccess;
 	bool showSelectMenu;
 	int theme;
 	int subtheme;
 	int dsiMusic;
+	bool boxArtColorDeband;
 	bool showNds;
+	int showGba;
 	bool showRvid;
 	bool showA26;
+	bool showA78;
 	bool showNes;
 	bool showGb;
 	bool showSmsGg;
@@ -194,6 +198,8 @@ public:
 	bool boostCpu;
 	bool boostVram;
 	int bstrap_dsiMode;
+    int extendedMemory;
+
 	bool forceSleepPatch;
 	bool slot1SCFGUnlock;
 	bool dsiWareBooter;
@@ -224,6 +230,7 @@ public:
 	std::string r4_theme;
 	std::string dsi_theme;
 	std::string _3ds_theme;
+    std::string gbaBorder;
     std::string unlaunchBg;
 
 	bool wideScreen;

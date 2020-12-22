@@ -92,16 +92,6 @@ class TWLSettings
         ENightlyBootstrap = true
     };
 
-    enum TLaunchType
-    {
-        ENoLaunch = -1,
-        ESlot1 = 0,
-        ESDFlashcardLaunch = 1,
-        EDSiWareLaunch = 2,
-        ENESDSLaunch = 3,
-        EGameYobLaunch = 4
-    };
-
     /*	0 = Nintendo DSi (Retail)
     1 = Nintendo DSi (Dev/Panda)
     2 = Nintendo 3DS
@@ -145,16 +135,19 @@ class TWLSettings
     bool wifiLed;
     bool sdRemoveDetect;
     bool showMicroSd;
-    bool useGbarunner;
     bool gbar2DldiAccess;
     bool showMainMenu;
     bool showSelectMenu;
     int theme;
     int subtheme;
+    int settingsMusic;
     int dsiMusic;
+	bool boxArtColorDeband;
     bool showNds;
+    int showGba;
     bool showRvid;
     bool showA26;
+	bool showA78;
     bool showNes;
     bool showGb;
     bool showSmsGg;
@@ -184,6 +177,8 @@ class TWLSettings
     bool boostCpu;
     bool boostVram;
     int bstrap_dsiMode;
+    int extendedMemory;
+
     bool forceSleepPatch;
     bool slot1AccessSD;
     bool slot1SCFGUnlock;
@@ -208,11 +203,13 @@ class TWLSettings
     bool homebrewBootstrap;
     bool soundFreq;
     int dsiSplash;
+	int nintendoLogoColor;
     bool showlogo;
 
     std::string r4_theme;
     std::string dsi_theme;
     std::string _3ds_theme;
+    std::string gbaBorder;
     std::string unlaunchBg;
     bool removeLauncherPatches;
 

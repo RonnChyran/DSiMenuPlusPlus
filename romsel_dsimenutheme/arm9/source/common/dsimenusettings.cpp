@@ -1,4 +1,4 @@
-
+#include <nds/arm9/dldi.h>
 #include "dsimenusettings.h"
 #include "bootstrappaths.h"
 #include "systemdetails.h"
@@ -34,16 +34,18 @@ TWLSettings::TWLSettings()
 	blfLevel = 0;
 	sdRemoveDetect = true;
 	showMicroSd = false;
-	useGbarunner = false;
 	gbar2DldiAccess = false;
 	showSelectMenu = false;
 	theme = 0;
 	subtheme = 0;
 	dsiMusic = 1;
+	boxArtColorDeband = true;
 
 	showNds = true;
+	showGba = 1 + isDSiMode();
 	showRvid = true;
 	showA26 = true;
+	showA78 = true;
 	showNes = true;
 	showGb = true;
 	showSmsGg = true;
@@ -75,6 +77,8 @@ TWLSettings::TWLSettings()
 	boostCpu = false;
 	boostVram = false;
 	bstrap_dsiMode = EDSMode;
+    extendedMemory = 0;
+
 	forceSleepPatch = false;
 	slot1SCFGUnlock = false;
 	dsiWareBooter = false;
@@ -99,6 +103,7 @@ TWLSettings::TWLSettings()
 	dsi_theme = "dark";
 	_3ds_theme = "light";
 	
+    gbaBorder = "default.png";
     unlaunchBg = "default.gif";
 
 	soundfreq = EFreq32KHz;
@@ -127,8 +132,13 @@ void TWLSettings::loadSettings()
 	consoleModel = settingsini.GetInt("SRLOADER", "CONSOLE_MODEL", consoleModel);
 
 	showNds = settingsini.GetInt("SRLOADER", "SHOW_NDS", showNds);
+	showGba = settingsini.GetInt("SRLOADER", "SHOW_GBA", showGba);
+	if (!sys().isRegularDS() && showGba != 0) {
+		showGba = 2;
+	}
 	showRvid = settingsini.GetInt("SRLOADER", "SHOW_RVID", showRvid);
 	showA26 = settingsini.GetInt("SRLOADER", "SHOW_A26", showA26);
+	showA78 = settingsini.GetInt("SRLOADER", "SHOW_A78", showA78);
 	showNes = settingsini.GetInt("SRLOADER", "SHOW_NES", showNes);
 	showGb = settingsini.GetInt("SRLOADER", "SHOW_GB", showGb);
 	showSmsGg = settingsini.GetInt("SRLOADER", "SHOW_SMSGG", showSmsGg);
@@ -147,10 +157,6 @@ void TWLSettings::loadSettings()
 	titleLanguage = settingsini.GetInt("SRLOADER", "TITLELANGUAGE", titleLanguage);
 	sdRemoveDetect = settingsini.GetInt("SRLOADER", "SD_REMOVE_DETECT", sdRemoveDetect);
 	showMicroSd = settingsini.GetInt("SRLOADER", "SHOW_MICROSD", showMicroSd);
-	useGbarunner = settingsini.GetInt("SRLOADER", "USE_GBARUNNER2", useGbarunner);
-	if (!sys().isRegularDS()) {
-		useGbarunner = true;
-	}
 	gbar2DldiAccess = settingsini.GetInt("SRLOADER", "GBAR2_DLDI_ACCESS", gbar2DldiAccess);
 
 	soundfreq = settingsini.GetInt("SRLOADER", "SOUND_FREQ", soundfreq);
@@ -167,6 +173,7 @@ void TWLSettings::loadSettings()
 	theme = settingsini.GetInt("SRLOADER", "THEME", theme);
 	subtheme = settingsini.GetInt("SRLOADER", "SUB_THEME", subtheme);
 	dsiMusic = settingsini.GetInt("SRLOADER", "DSI_MUSIC", dsiMusic);
+	boxArtColorDeband = settingsini.GetInt("SRLOADER", "PHOTO_BOXART_COLOR_DEBAND", boxArtColorDeband);
 	showDirectories = settingsini.GetInt("SRLOADER", "SHOW_DIRECTORIES", showDirectories);
 	showHidden = settingsini.GetInt("SRLOADER", "SHOW_HIDDEN", showHidden);
 	showBoxArt = settingsini.GetInt("SRLOADER", "SHOW_BOX_ART", showBoxArt);
@@ -181,12 +188,17 @@ void TWLSettings::loadSettings()
 	slot1LaunchMethod = settingsini.GetInt("SRLOADER", "SLOT1_LAUNCHMETHOD", slot1LaunchMethod);
 	bootstrapFile = settingsini.GetInt("SRLOADER", "BOOTSTRAP_FILE", bootstrapFile);
 	useBootstrap = settingsini.GetInt("SRLOADER", "USE_BOOTSTRAP", useBootstrap);
+	if (io_dldi_data->ioInterface.features & FEATURE_SLOT_GBA) {
+		useBootstrap = true;
+	}
 
 	// Default nds-bootstrap settings
 	gameLanguage = settingsini.GetInt("NDS-BOOTSTRAP", "LANGUAGE", gameLanguage);
 	boostCpu = settingsini.GetInt("NDS-BOOTSTRAP", "BOOST_CPU", boostCpu);
 	boostVram = settingsini.GetInt("NDS-BOOTSTRAP", "BOOST_VRAM", boostVram);
 	bstrap_dsiMode = settingsini.GetInt("NDS-BOOTSTRAP", "DSI_MODE", bstrap_dsiMode);
+	extendedMemory = settingsini.GetInt("NDS-BOOTSTRAP", "EXTENDED_MEMORY", extendedMemory);
+
 	forceSleepPatch = settingsini.GetInt("NDS-BOOTSTRAP", "FORCE_SLEEP_PATCH", forceSleepPatch);
 	dsiWareBooter = settingsini.GetInt("SRLOADER", "DSIWARE_BOOTER", dsiWareBooter);
 
@@ -202,6 +214,7 @@ void TWLSettings::loadSettings()
 	dsi_theme = settingsini.GetString("SRLOADER", "DSI_THEME", dsi_theme);
 	_3ds_theme = settingsini.GetString("SRLOADER", "3DS_THEME", _3ds_theme);
     unlaunchBg = settingsini.GetString("SRLOADER", "UNLAUNCH_BG", unlaunchBg);
+    gbaBorder = settingsini.GetString("SRLOADER", "GBA_BORDER", gbaBorder);
 	charUnlaunchBg = unlaunchBg.c_str();
 	removeLauncherPatches = settingsini.GetInt("SRLOADER", "UNLAUNCH_PATCH_REMOVE", removeLauncherPatches);
 
